@@ -3,10 +3,12 @@
 // Load environment variables FIRST before any other imports
 import dotenv from "dotenv";
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
+import { join } from 'path';
 import { readFileSync } from "fs";
 import express from "express";
 import serveStatic from "serve-static";
+import cors from "cors";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,6 +33,14 @@ const STATIC_PATH =
     : `${process.cwd()}/../frontend/`;
 
 const app = express();
+
+// Configure CORS to allow requests from frontend
+app.use(cors({
+  origin: process.env.SHOPIFY_APP_URL || 'https://490a61f04126.ngrok-free.app',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
