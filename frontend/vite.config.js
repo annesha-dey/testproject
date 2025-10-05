@@ -17,8 +17,8 @@ if (
 process.env.VITE_SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY;
 
 const proxyOptions = {
-  target: `http://127.0.0.1:${process.env.BACKEND_PORT}`,
-  changeOrigin: false,
+  target: "https://61243d5c1409.ngrok-free.app",
+  changeOrigin: true,
   secure: true,
   ws: false,
 };
@@ -38,8 +38,8 @@ if (host === "localhost") {
 } else {
   hmrConfig = {
     protocol: "wss",
-    host: host,
-    port: process.env.FRONTEND_PORT,
+    host: "490a61f04126.ngrok-free.app",
+    port: 443,
     clientPort: 443,
   };
 }
@@ -54,8 +54,12 @@ export default defineConfig({
     host: "localhost",
     port: process.env.FRONTEND_PORT,
     hmr: hmrConfig,
+    allowedHosts: [
+      "localhost",
+      "490a61f04126.ngrok-free.app",
+      ".ngrok-free.app"
+    ],
     proxy: {
-      "^/(\\?.*)?$": proxyOptions,
       "^/api(/|(\\?.*)?$)": proxyOptions,
     },
   },

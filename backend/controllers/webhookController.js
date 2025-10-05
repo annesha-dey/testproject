@@ -3,7 +3,7 @@ import { DeliveryMethod } from "@shopify/shopify-api";
 /**
  * @type {{[key: string]: import("@shopify/shopify-api").WebhookHandler}}
  */
-export default {
+const PrivacyWebhookHandlers = {
   /**
    * Customers can request their data from a store owner. When this happens,
    * Shopify invokes this privacy webhook.
@@ -33,6 +33,7 @@ export default {
       //     "id": 9999
       //   }
       // }
+      console.log("CUSTOMERS_DATA_REQUEST webhook received", payload);
     },
   },
 
@@ -62,6 +63,7 @@ export default {
       //     220458
       //   ]
       // }
+      console.log("CUSTOMERS_REDACT webhook received", payload);
     },
   },
 
@@ -81,6 +83,9 @@ export default {
       //   "shop_id": 954889,
       //   "shop_domain": "{shop}.myshopify.com"
       // }
+      console.log("SHOP_REDACT webhook received", payload);
     },
   },
 };
+
+export default PrivacyWebhookHandlers;

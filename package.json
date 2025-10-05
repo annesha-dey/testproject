@@ -1,7 +1,7 @@
 {
   "name": "ringarosesapp",
   "version": "1.0.0",
-  "main": "web/index.js",
+  "main": "backend/server.js",
   "license": "UNLICENSED",
   "scripts": {
     "shopify": "shopify",
@@ -16,7 +16,7 @@
   "private": true,
   "workspaces": [
     "extensions/*",
-    "web",
-    "web/frontend"
+    "backend",
+    "frontend"
   ]
 }

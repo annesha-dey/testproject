@@ -1,31 +1,25 @@
-import { useAppBridge } from "@shopify/app-bridge-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Banner, Layout, Page } from "@shopify/polaris";
 
 export default function ExitIframe() {
-  const app = useAppBridge();
   const { search } = useLocation();
   const [showWarning, setShowWarning] = useState(false);
 
-  app.loading(true);
-
   useEffect(() => {
-    if (!!app && !!search) {
+    if (search) {
       const params = new URLSearchParams(search);
-      const redirectUri = params.get("redirectUri");
-      const url = new URL(decodeURIComponent(redirectUri));
+      const shop = params.get("shop");
 
-      if (
-        [location.hostname, "admin.shopify.com"].includes(url.hostname) ||
-        url.hostname.endsWith(".myshopify.com")
-      ) {
-        window.open(url, "_top");
+      if (shop) {
+        const appUrl = import.meta.env.VITE_SHOPIFY_APP_URL;
+        const redirectUrl = `${appUrl}?shop=${shop}`;
+        window.top.location.href = redirectUrl;
       } else {
         setShowWarning(true);
       }
     }
-  }, [app, search, setShowWarning]);
+  }, [search]);
 
   return showWarning ? (
     <Page narrowWidth>

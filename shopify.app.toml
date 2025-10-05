@@ -2,12 +2,11 @@
 
 client_id = "f5bd8f7334cc8364aa3a3b7ff9fb19bd"
 name = "ringarosesapp"
-application_url = "https://example.com"
-embedded = true
+application_url = "https://490a61f04126.ngrok-free.app"
+embedded = false
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2026-01"
@@ -17,4 +16,4 @@ api_version = "2026-01"
 scopes = "write_products"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://61243d5c1409.ngrok-free.app/api/auth/callback" ]
