@@ -1,14 +1,17 @@
 import express from "express";
 import productRoutes from "./productRoutes.js";
-import debugRoutes from "./debug.js";
-import storeRoutes from "./storeRoutes.js";
 import billingRoutes from "./billingRoutes.js";
+import storeRoutes from "./storeRoutes.js";
+import storeDataRoutes from "./storeDataRoutes.js";
+import debugRoutes from "./debug.js";
 
 const router = express.Router();
 
+// Mount all route modules
 router.use("/products", productRoutes);
-router.use("/debug", debugRoutes);
-router.use("/stores", storeRoutes);
 router.use("/billing", billingRoutes);
+router.use("/stores", storeRoutes);
+router.use("/store-data", storeDataRoutes);
+router.use("/debug", debugRoutes);
 
 export default router;

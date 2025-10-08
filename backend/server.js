@@ -49,20 +49,29 @@ const billingManager = new BillingManager(shopify.api);
 // Initialize billing plans
 await billingManager.initializePlans();
 
+// Create Express app
 const app = express();
 
-// Configure CORS to allow requests from frontend
-app.use(cors({
+// CORS configuration for multiple origins
+const corsOptions = {
   origin: [
-    process.env.SHOPIFY_APP_URL || 'https://2e8a92d93a31.ngrok-free.app',
     'https://2e8a92d93a31.ngrok-free.app',
     'https://277949e9b10a.ngrok-free.app',
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'http://localhost:3000'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'ngrok-skip-browser-warning']
+};
+
+app.use(cors(corsOptions));
+
+// Add ngrok-specific headers to bypass browser warning
+app.use((req, res, next) => {
+  res.header('ngrok-skip-browser-warning', 'true');
+  next();
+});
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
@@ -107,6 +116,16 @@ app.post(
 // Parse JSON bodies first
 app.use(express.json());
 
+// Add a simple test route
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    message: "Backend server is running",
+    timestamp: new Date().toISOString(),
+    port: PORT
+  });
+});
+
 // Mount API routes
 app.use("/api", apiRoutes);
 
@@ -129,6 +148,12 @@ app.get("*", (req, res) => {
       // If no built frontend, redirect to frontend development server
       const frontendUrl = process.env.VITE_SHOPIFY_APP_URL || 'http://localhost:5173';
       return res.redirect(`${frontendUrl}${req.url}`);
+    }
+    
+    // If accessing root without shop parameter, redirect to login
+    if (req.path === '/' && !req.query.shop) {
+      const frontendUrl = process.env.VITE_SHOPIFY_APP_URL || 'http://localhost:5173';
+      return res.redirect(`${frontendUrl}/login`);
     }
     
     res

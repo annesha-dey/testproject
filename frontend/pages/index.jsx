@@ -1,16 +1,22 @@
+import { useTranslation } from "react-i18next";
+import { TitleBar } from "@shopify/app-bridge-react";
 import { useState, useEffect } from "react";
 import {
   Card,
   Page,
   Layout,
-  TextField,
-  Button,
-  Text,
-  Stack,
-  Image,
-  Badge,
-  DisplayText,
+  TextContainer,
   Heading,
+  Banner,
+  List,
+  Link,
+  Text,
+  Button,
+  TextField,
+  FormLayout,
+  Stack,
+  Spinner,
+  DisplayText,
   CalloutCard,
   ResourceList,
   ResourceItem,
@@ -21,6 +27,7 @@ import {
   Link,
   ButtonGroup,
 } from "@shopify/polaris";
+import LoginPage from "../components/Auth/LoginPage";
 import { useTranslation } from "react-i18next";
 // Temporarily remove problematic icons
 // import { 
@@ -34,9 +41,11 @@ import { ProductsCard } from "../components";
 
 export default function HomePage() {
   const { t } = useTranslation();
-  const [shopDomain, setShopDomain] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentShop, setCurrentShop] = useState("");
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // Check if we have shop parameter in URL (after OAuth redirect)
@@ -46,21 +55,100 @@ export default function HomePage() {
     if (shop) {
       setIsAuthenticated(true);
       setCurrentShop(shop);
+      fetchDashboardData(shop);
+    } else {
+      setLoading(false);
     }
   }, []);
 
-  const handleInstall = () => {
-    if (!shopDomain) return;
-    
-    // Ensure shop domain has .myshopify.com
-    const fullShopDomain = shopDomain.includes('.myshopify.com') 
-      ? shopDomain 
-      : `${shopDomain}.myshopify.com`;
-    
-    // Redirect to backend OAuth initiation
-    const backendUrl = "https://277949e9b10a.ngrok-free.app";
-    window.location.href = `${backendUrl}/api/auth?shop=${fullShopDomain}`;
+  const fetchDashboardData = async (shop) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log(`🔄 Fetching dashboard data for shop: ${shop}`);
+      
+      const backendUrl = "https://277949e9b10a.ngrok-free.app";
+      
+      // First test if backend server is running
+      console.log(`🏥 Testing backend server health...`);
+      try {
+        const healthResponse = await fetch(`${backendUrl}/api/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        
+        if (healthResponse.ok) {
+          const healthData = await healthResponse.json();
+          console.log(`✅ Backend server is running:`, healthData);
+        } else {
+          console.log(`❌ Backend health check failed:`, healthResponse.status);
+          throw new Error(`Backend server not responding (${healthResponse.status})`);
+        }
+      } catch (healthError) {
+        console.error(`❌ Cannot connect to backend server:`, healthError);
+        throw new Error(`Backend server is not running or not accessible: ${healthError.message}`);
+      }
+
+      // Now try the store data test endpoint
+      console.log(`🧪 Testing store data routes...`);
+      const testResponse = await fetch(`${backendUrl}/api/store-data/test`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+      
+      if (testResponse.ok) {
+        const testData = await testResponse.json();
+        console.log(`✅ Store data routes working:`, testData);
+      } else {
+        console.log(`❌ Store data routes test failed:`, testResponse.status);
+        throw new Error(`Store data routes not working (${testResponse.status})`);
+      }
+      
+      // Now try the dashboard endpoint
+      const response = await fetch(`${backendUrl}/api/store-data/dashboard/${shop}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Session expired or doesn't exist, show authentication message
+          console.log(`🔄 Session expired for ${shop}, authentication required`);
+          setError(`Authentication required for ${shop}. Please reinstall the app.`);
+          setLoading(false);
+          return;
+        }
+        throw new Error(`Failed to fetch dashboard data: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(`✅ Dashboard data received for ${shop}:`, data);
+      
+      setDashboardData(data);
+    } catch (err) {
+      console.error(`❌ Error fetching dashboard data:`, err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+
+  // Show login page if no shop parameter
+  if (!isAuthenticated && !loading) {
+    return <LoginPage />;
+  }
 
   if (isAuthenticated) {
     return (
@@ -83,13 +171,47 @@ export default function HomePage() {
         ]}
       >
         <Layout>
+          {error && (
+            <Layout.Section>
+              <Banner
+                title="Error Loading Store Data"
+                status="critical"
+                onDismiss={() => setError(null)}
+              >
+                <p>{error}</p>
+                <Stack>
+                  <Button onClick={() => fetchDashboardData(currentShop)}>
+                    Retry
+                  </Button>
+                  {error.includes('Authentication required') && (
+                    <Button 
+                      primary 
+                      onClick={() => {
+                        const backendUrl = "https://277949e9b10a.ngrok-free.app";
+                        console.log(`🔄 Redirecting to OAuth for shop: ${currentShop}`);
+                        window.location.href = `${backendUrl}/api/auth?shop=${currentShop}`;
+                      }}
+                    >
+                      Reinstall App
+                    </Button>
+                  )}
+                </Stack>
+              </Banner>
+            </Layout.Section>
+          )}
+          
           <Layout.Section>
             <Banner
-              title="Welcome to Ring a Roses App!"
+              title={dashboardData ? `Welcome to ${dashboardData.store.name}!` : "Welcome to Ring a Roses App!"}
               status="success"
               onDismiss={() => {}}
             >
-              <p>Your app is successfully installed and ready to use. Start exploring the features below.</p>
+              <p>
+                {dashboardData 
+                  ? `Your app is successfully installed in ${dashboardData.store.name} (${dashboardData.store.domain}). Start exploring the features below.`
+                  : "Your app is successfully installed and ready to use. Start exploring the features below."
+                }
+              </p>
             </Banner>
           </Layout.Section>
 
@@ -119,14 +241,19 @@ export default function HomePage() {
                 <Card sectioned>
                   <Stack vertical spacing="tight">
                     <Stack alignment="center">
-                      <Heading>📊 Analytics</Heading>
+                      <Heading>📋 Orders</Heading>
                     </Stack>
-                    <DisplayText size="medium">1,247</DisplayText>
+                    <DisplayText size="medium">
+                      {loading ? "..." : (dashboardData?.metrics.orders || 0)}
+                    </DisplayText>
                     <Text variant="bodyMd" tone="subdued">
-                      Total processed items
+                      Total orders
                     </Text>
-                    <Text variant="bodySm" tone="success">
-                      ↗ +12% from last month
+                    <Text variant="bodySm" tone={dashboardData?.permissions?.hasOrdersAccess ? "subdued" : "warning"}>
+                      {dashboardData?.permissions?.hasOrdersAccess 
+                        ? `${dashboardData?.store.currency || 'USD'} currency`
+                        : 'Orders access not available'
+                      }
                     </Text>
                   </Stack>
                 </Card>
@@ -138,14 +265,91 @@ export default function HomePage() {
                     <Stack alignment="center">
                       <Heading>📦 Products</Heading>
                     </Stack>
-                    <DisplayText size="medium">156</DisplayText>
+                    <DisplayText size="medium">
+                      {loading ? "..." : (dashboardData?.metrics.products || 0)}
+                    </DisplayText>
                     <Text variant="bodyMd" tone="subdued">
-                      Products managed
+                      Products in catalog
                     </Text>
-                    <Button fullWidth>
+                    <Button fullWidth onClick={() => window.location.href = `/products?shop=${currentShop}`}>
                       View Products
                     </Button>
                   </Stack>
+                </Card>
+              </Layout.Section>
+            </Layout>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Layout>
+              <Layout.Section oneHalf>
+                <Card sectioned>
+                  <Stack vertical spacing="tight">
+                    <Stack alignment="center">
+                      <Heading>👥 Customers</Heading>
+                    </Stack>
+                    <DisplayText size="medium">
+                      {loading ? "..." : (dashboardData?.metrics.customers || 0)}
+                    </DisplayText>
+                    <Text variant="bodyMd" tone={dashboardData?.permissions?.hasCustomersAccess ? "subdued" : "warning"}>
+                      {dashboardData?.permissions?.hasCustomersAccess 
+                        ? 'Total customers'
+                        : 'Customers access not available'
+                      }
+                    </Text>
+                    <Button fullWidth onClick={() => window.location.href = `/customers?shop=${currentShop}`}>
+                      View Customers
+                    </Button>
+                  </Stack>
+                </Card>
+              </Layout.Section>
+
+              <Layout.Section oneHalf>
+                <Card>
+                  <Card.Header>
+                    <Heading>🕒 Recent Orders</Heading>
+                  </Card.Header>
+                  {loading ? (
+                    <Card.Section>
+                      <Text>Loading recent orders...</Text>
+                    </Card.Section>
+                  ) : dashboardData?.recentOrders?.length > 0 ? (
+                    <ResourceList
+                      resourceName={{singular: 'order', plural: 'orders'}}
+                      items={dashboardData.recentOrders.slice(0, 5)}
+                      renderItem={(order) => (
+                        <ResourceItem
+                          id={order.id}
+                          accessibilityLabel={`View order ${order.name}`}
+                        >
+                          <Stack alignment="center">
+                            <Stack.Item fill>
+                              <Stack vertical spacing="extraTight">
+                                <Text variant="bodyMd" fontWeight="bold">
+                                  {order.name}
+                                </Text>
+                                <Text variant="bodySm" tone="subdued">
+                                  {order.customer ? `${order.customer.first_name} ${order.customer.last_name}` : 'Guest'}
+                                </Text>
+                              </Stack>
+                            </Stack.Item>
+                            <Stack vertical alignment="trailing">
+                              <Text variant="bodyMd" fontWeight="bold">
+                                {order.currency} {order.total_price}
+                              </Text>
+                              <Badge status={order.financial_status === 'paid' ? 'success' : 'warning'}>
+                                {order.financial_status}
+                              </Badge>
+                            </Stack>
+                          </Stack>
+                        </ResourceItem>
+                      )}
+                    />
+                  ) : (
+                    <Card.Section>
+                      <Text>No recent orders found</Text>
+                    </Card.Section>
+                  )}
                 </Card>
               </Layout.Section>
             </Layout>
@@ -221,45 +425,22 @@ export default function HomePage() {
     );
   }
 
+  // Loading state
   return (
-    <Page title="Install Ring a Roses App">
+    <Page>
       <Layout>
         <Layout.Section>
-          <Card sectioned>
-            <Stack vertical spacing="loose" alignment="center">
-              <Image
-                source={trophyImage}
-                alt="Ring a Roses App"
-                width={120}
-              />
-              <DisplayText size="large">Ring a Roses App</DisplayText>
-              <Text variant="bodyLg" alignment="center" tone="subdued">
-                Enter your shop domain to get started
-              </Text>
-              
-              <div style={{ width: '100%', maxWidth: '400px' }}>
-                <Stack vertical spacing="tight">
-                  <TextField
-                    label="Shop Domain"
-                    value={shopDomain}
-                    onChange={setShopDomain}
-                    placeholder="your-shop-name"
-                    suffix=".myshopify.com"
-                    helpText="Enter your shop's domain name"
-                  />
-                  <Button
-                    primary
-                    size="large"
-                    onClick={handleInstall}
-                    disabled={!shopDomain}
-                    fullWidth
-                  >
-                    Install App
-                  </Button>
-                </Stack>
-              </div>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            minHeight: '50vh' 
+          }}>
+            <Stack vertical alignment="center" spacing="loose">
+              <Spinner size="large" />
+              <Text variant="bodyLg">Loading...</Text>
             </Stack>
-          </Card>
+          </div>
         </Layout.Section>
       </Layout>
     </Page>
