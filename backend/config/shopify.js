@@ -1,15 +1,15 @@
-import { BillingInterval, LATEST_API_VERSION } from "@shopify/shopify-api";
+import { BillingInterval, LATEST_API_VERSION, shopifyApi } from "@shopify/shopify-api";
 import { shopifyApp } from "@shopify/shopify-app-express";
-import { SQLiteSessionStorage } from "@shopify/shopify-app-session-storage-sqlite";
 import { restResources } from "@shopify/shopify-api/rest/admin/2024-10";
 import dotenv from "dotenv";
-const DB_PATH = `${process.cwd()}/database.sqlite`;
+import { MongoSessionStorage } from "./mongoSessionStorage.js";
+
 dotenv.config();
 // Debug: Log environment variables
 console.log('Environment variables loaded:');
 console.log('SHOPIFY_API_KEY:', process.env.SHOPIFY_API_KEY);
 console.log('SHOPIFY_API_SECRET:', process.env.SHOPIFY_API_SECRET ? '[HIDDEN]' : 'NOT SET');
-console.log('SCOPES:', process.env.SCOPES);
+console.log('SCOPES:', process.env.SHOPIFY_API_SCOPES);
 console.log('HOST:', process.env.HOST);
 
 // The transactions with Shopify will always be marked as test transactions, unless NODE_ENV is production.
@@ -27,7 +27,7 @@ const shopify = shopifyApp({
   api: {
     apiKey: process.env.SHOPIFY_API_KEY,
     apiSecretKey: process.env.SHOPIFY_API_SECRET,
-    scopes: process.env.SCOPES?.split(',') || ['write_products'],
+    scopes: process.env.SHOPIFY_API_SCOPES?.split(',') || ['write_products'],
     hostName: process.env.HOST?.replace(/https?:\/\//, '') || 'localhost',
     apiVersion: LATEST_API_VERSION,
     restResources,
@@ -48,8 +48,8 @@ const shopify = shopifyApp({
     path: "/api/webhooks",
   },
   useOnlineTokens: false,
-  // This should be replaced with your preferred storage strategy
-  sessionStorage: new SQLiteSessionStorage(DB_PATH),
+  // MongoDB session storage with encryption
+  sessionStorage: new MongoSessionStorage(),
 });
 
 export default shopify;

@@ -16,10 +16,16 @@ const __dirname = dirname(__filename);
 // Load .env file from the backend directory
 dotenv.config({ path: join(__dirname, '.env') });
 
+import setupCheck from "./utils/setupCheck.js";
+import connectDB from "./config/database.js";
 import shopify from "./config/shopify.js";
 import PrivacyWebhookHandlers from "./controllers/webhookController.js";
 import apiRoutes from "./routes/index.js";
 import { validateSession } from "./middleware/auth.js";
+import StoreManager from "./utils/storeManager.js";
+
+// Run setup check before initializing anything else
+setupCheck();
 
 console.log("process.env.SHOPIFY_API_KEY\n", process.env.SHOPIFY_API_KEY);
 const PORT = parseInt(
@@ -29,14 +35,30 @@ const PORT = parseInt(
 
 const STATIC_PATH =
   process.env.NODE_ENV === "production"
-    ? `${process.cwd()}/../frontend/dist`
-    : `${process.cwd()}/../frontend/`;
+    ? `${process.cwd()}/public`
+    : `${process.cwd()}/public`;
+
+// Connect to MongoDB
+await connectDB();
+
+// Initialize store manager and billing manager
+const storeManager = new StoreManager();
+const { default: BillingManager } = await import("./utils/billingManager.js");
+const billingManager = new BillingManager(shopify.api);
+
+// Initialize billing plans
+await billingManager.initializePlans();
 
 const app = express();
 
 // Configure CORS to allow requests from frontend
 app.use(cors({
-  origin: process.env.SHOPIFY_APP_URL || 'https://490a61f04126.ngrok-free.app',
+  origin: [
+    process.env.SHOPIFY_APP_URL || 'https://2e8a92d93a31.ngrok-free.app',
+    'https://2e8a92d93a31.ngrok-free.app',
+    'https://277949e9b10a.ngrok-free.app',
+    'http://localhost:5173'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -51,8 +73,27 @@ app.get(
     const { shop } = res.locals.shopify.session;
     const appUrl = process.env.SHOPIFY_APP_URL;
 
+    // Handle reinstallation properly
+    try {
+      const isReinstallation = await storeManager.handleReinstallation(shop);
+      
+      if (isReinstallation) {
+        console.log(`🔄 App reinstallation completed for: ${shop}`);
+      } else {
+        console.log(`🆕 New app installation for: ${shop}`);
+      }
+
+      // Store fresh shop data
+      await storeManager.storeShopData(res.locals.shopify.session);
+      console.log(`🎉 OAuth completed and store data saved for: ${shop}`);
+    } catch (error) {
+      console.error(`❌ Error handling OAuth for ${shop}:`, error);
+      // Continue with redirect even if there's an error to avoid breaking the flow
+    }
+
     // For non-embedded apps, redirect directly to frontend with shop parameter
-    res.redirect(`${appUrl}?shop=${shop}`);
+    const frontendUrl = process.env.VITE_SHOPIFY_APP_URL || appUrl;
+    res.redirect(`${frontendUrl}?shop=${shop}`);
   }
 );
 app.post(
@@ -63,10 +104,7 @@ app.post(
 // If you are adding routes outside of the /api path, remember to
 // also add a proxy rule for them in frontend/vite.config.js
 
-// Apply authentication middleware to all API routes
-app.use("/api/*", validateSession);
-
-// Parse JSON bodies
+// Parse JSON bodies first
 app.use(express.json());
 
 // Mount API routes
@@ -76,17 +114,40 @@ app.use("/api", apiRoutes);
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
 
-app.use("/*", async (_req, res, _next) => {
-  res
-    .status(200)
-    .set("Content-Type", "text/html")
-    .send(
-      readFileSync(join(STATIC_PATH, "index.html"))
-        .toString()
-        .replace("%VITE_SHOPIFY_API_KEY%", process.env.SHOPIFY_API_KEY || "")
-    );
+// Handle 404 for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// Handle frontend routes (SPA fallback)
+app.get("*", (req, res) => {
+  try {
+    const indexPath = join(STATIC_PATH, "index.html");
+    const indexExists = require('fs').existsSync(indexPath);
+    
+    if (!indexExists) {
+      // If no built frontend, redirect to frontend development server
+      const frontendUrl = process.env.VITE_SHOPIFY_APP_URL || 'http://localhost:5173';
+      return res.redirect(`${frontendUrl}${req.url}`);
+    }
+    
+    res
+      .status(200)
+      .set("Content-Type", "text/html")
+      .send(
+        readFileSync(indexPath)
+          .toString()
+          .replace("%VITE_SHOPIFY_API_KEY%", process.env.SHOPIFY_API_KEY || "")
+      );
+  } catch (error) {
+    console.error('Error serving frontend:', error);
+    const frontendUrl = process.env.VITE_SHOPIFY_APP_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}${req.url}`);
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
+  console.log(`🚀 Backend server running on port ${PORT}`);
+  console.log(`📡 CORS configured for multiple origins`);
+  console.log(`🔧 Billing system updated with Session constructor`);
 });

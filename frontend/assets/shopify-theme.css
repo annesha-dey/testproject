@@ -1,0 +1,206 @@
+/* Shopify Admin Theme Enhancements */
+
+/* Custom Shopify-like styling */
+.Polaris-Frame {
+  --p-color-bg: #f6f6f7;
+  --p-color-bg-surface: #ffffff;
+  --p-color-bg-surface-hover: #f6f6f7;
+  --p-color-bg-surface-selected: #f1f2f4;
+  --p-color-border: #e1e3e5;
+  --p-color-border-hover: #c9cccf;
+  --p-color-text: #202223;
+  --p-color-text-secondary: #6d7175;
+}
+
+/* Navigation styling */
+.Polaris-Navigation {
+  background: #f6f6f7;
+  border-right: 1px solid #e1e3e5;
+}
+
+.Polaris-Navigation__Item {
+  border-radius: 8px;
+  margin: 2px 8px;
+}
+
+.Polaris-Navigation__Item:hover {
+  background: #f1f2f4;
+}
+
+.Polaris-Navigation__Item--selected {
+  background: #005bd3;
+  color: white;
+}
+
+.Polaris-Navigation__Item--selected .Polaris-Icon {
+  color: white;
+}
+
+/* TopBar styling */
+.Polaris-TopBar {
+  background: #ffffff;
+  border-bottom: 1px solid #e1e3e5;
+  box-shadow: 0 1px 0 rgba(22, 29, 37, 0.05);
+}
+
+/* Card enhancements */
+.Polaris-Card {
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(22, 29, 37, 0.05);
+  border: 1px solid #e1e3e5;
+}
+
+.Polaris-Card__Section {
+  padding: 20px;
+}
+
+/* Button styling */
+.Polaris-Button--primary {
+  background: #008060;
+  border-color: #008060;
+}
+
+.Polaris-Button--primary:hover {
+  background: #00704a;
+  border-color: #00704a;
+}
+
+/* Badge styling */
+.Polaris-Badge--statusSuccess {
+  background: #d1f7c4;
+  color: #00783e;
+}
+
+.Polaris-Badge--statusAttention {
+  background: #fff5cc;
+  color: #916a00;
+}
+
+.Polaris-Badge--statusCritical {
+  background: #fed3d1;
+  color: #d72c0d;
+}
+
+/* Progress bar */
+.Polaris-ProgressBar__Fill {
+  background: linear-gradient(to right, #008060, #00a47c);
+}
+
+/* Resource list items */
+.Polaris-ResourceItem {
+  border-bottom: 1px solid #f1f2f4;
+  padding: 16px 20px;
+}
+
+.Polaris-ResourceItem:hover {
+  background: #f9fafb;
+}
+
+/* Page header */
+.Polaris-Page-Header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1e3e5;
+  margin-bottom: 20px;
+}
+
+.Polaris-Page-Header__Title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #202223;
+}
+
+/* Layout sections */
+.Polaris-Layout__Section {
+  margin-bottom: 20px;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .Polaris-Layout__Section--oneThird,
+  .Polaris-Layout__Section--oneHalf {
+    width: 100%;
+  }
+  
+  .Polaris-Card__Section {
+    padding: 16px;
+  }
+}
+
+/* Custom utility classes */
+.text-center {
+  text-align: center;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+/* Shopify green accent */
+.shopify-accent {
+  color: #008060;
+}
+
+.shopify-bg-accent {
+  background-color: #008060;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Enhanced focus states */
+.Polaris-Button:focus,
+.Polaris-TextField__Input:focus {
+  outline: 2px solid #005bd3;
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar for navigation */
+.Polaris-Navigation::-webkit-scrollbar {
+  width: 6px;
+}
+
+.Polaris-Navigation::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.Polaris-Navigation::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.Polaris-Navigation::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

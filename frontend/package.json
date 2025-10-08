@@ -6,6 +6,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite --port 5173",
+    "build:production": "SHOPIFY_API_KEY=$SHOPIFY_API_KEY vite build",
     "coverage": "vitest run --coverage"
   },
   "type": "module",

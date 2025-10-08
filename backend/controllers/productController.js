@@ -7,6 +7,17 @@ import Product from "../models/Product.js";
  */
 export const getProductCount = async (req, res) => {
   try {
+    console.log('Getting product count for shop:', req.query.shop);
+    console.log('res.locals.shopify:', res.locals.shopify);
+    console.log('Session exists:', !!res.locals.shopify?.session);
+    
+    if (!res.locals.shopify?.session) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'No valid session found' 
+      });
+    }
+    
     const count = await Product.getCount(res.locals.shopify.session);
     res.status(200).json({ count });
   } catch (error) {
