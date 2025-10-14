@@ -1,0 +1,48 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0"
+  },
+  "database": {
+    "mongodb": {
+      "uri": "${MONGO_URL}",
+      "options": {
+        "useNewUrlParser": true,
+        "useUnifiedTopology": true,
+        "maxPoolSize": 10,
+        "serverSelectionTimeoutMS": 5000,
+        "socketTimeoutMS": 45000
+      }
+    }
+  },
+  "shopify": {
+    "app_url": "${SHOPIFY_APP_URL}",
+    "frontend_url": "${VITE_SHOPIFY_APP_URL}"
+  },
+  "cors": {
+    "origins": [
+      "${SHOPIFY_APP_URL}",
+      "${VITE_SHOPIFY_APP_URL}"
+    ]
+  },
+  "billing": {
+    "mock_mode": false,
+    "trial_days": 14
+  },
+  "logging": {
+    "level": "info",
+    "console": true,
+    "file": true,
+    "file_path": "./logs/app.log"
+  },
+  "features": {
+    "gdpr_compliance": true,
+    "webhook_verification": true,
+    "session_encryption": true
+  },
+  "security": {
+    "rate_limiting": true,
+    "helmet": true,
+    "compression": true
+  }
+}

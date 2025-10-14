@@ -1,0 +1,39 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "localhost"
+  },
+  "database": {
+    "mongodb": {
+      "uri": "${MONGO_URL}",
+      "options": {}
+    }
+  },
+  "shopify": {
+    "app_url": "https://228c4be010cb.ngrok-free.app",
+    "backend_url": "https://e43e420e9e45.ngrok-free.app",
+    "frontend_url": "http://localhost:5173"
+  },
+  "cors": {
+    "origins": [
+      "https://228c4be010cb.ngrok-free.app",
+      "https://e43e420e9e45.ngrok-free.app", 
+      "http://localhost:5173",
+      "http://localhost:3000"
+    ]
+  },
+  "billing": {
+    "mock_mode": true,
+    "trial_days": 7
+  },
+  "logging": {
+    "level": "debug",
+    "console": true,
+    "file": false
+  },
+  "features": {
+    "gdpr_compliance": true,
+    "webhook_verification": true,
+    "session_encryption": true
+  }
+}

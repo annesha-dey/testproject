@@ -1,242 +1,233 @@
-# Shopify App Template for Node
+# Shopify App Boilerplate
 
-This is a template for building a [Shopify app](https://shopify.dev/docs/apps/getting-started) using Node and React. It contains the basics for building a Shopify app.
+A **clean, modular, plug-and-play** Shopify app boilerplate with a scalable architecture that allows you to rapidly build and deploy multiple apps on a shared foundation.
 
-Rather than cloning this repo, you can use your preferred package manager and the Shopify CLI with [these steps](#installing-the-template).
+## 🏗️ Architecture
 
-## Benefits
-
-Shopify apps are built on a variety of Shopify tools to create a great merchant experience. The [create an app](https://shopify.dev/docs/apps/getting-started/create) tutorial in our developer documentation will guide you through creating a Shopify app using this template.
-
-The Node app template comes with the following out-of-the-box functionality:
-
-- OAuth: Installing the app and granting permissions
-- GraphQL Admin API: Querying or mutating Shopify admin data
-- REST Admin API: Resource classes to interact with the API
-- Shopify-specific tooling:
-  - AppBridge
-  - Polaris
-  - Webhooks
-
-## Tech Stack
-
-This template combines a number of third party open-source tools:
-
-- [Express](https://expressjs.com/) builds the backend.
-- [Vite](https://vitejs.dev/) builds the [React](https://reactjs.org/) frontend.
-- [React Router](https://reactrouter.com/) is used for routing. We wrap this with file-based routing.
-- [React Query](https://react-query.tanstack.com/) queries the Admin API.
-- [`i18next`](https://www.i18next.com/) and related libraries are used to internationalize the frontend.
-  - [`react-i18next`](https://react.i18next.com/) is used for React-specific i18n functionality.
-  - [`i18next-resources-to-backend`](https://github.com/i18next/i18next-resources-to-backend) is used to dynamically load app translations.
-  - [`@formatjs/intl-localematcher`](https://formatjs.io/docs/polyfills/intl-localematcher/) is used to match the user locale with supported app locales.
-  - [`@formatjs/intl-locale`](https://formatjs.io/docs/polyfills/intl-locale) is used as a polyfill for [`Intl.Locale`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale) if necessary.
-  - [`@formatjs/intl-pluralrules`](https://formatjs.io/docs/polyfills/intl-pluralrules) is used as a polyfill for [`Intl.PluralRules`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/PluralRules) if necessary.
-
-The following Shopify tools complement these third-party tools to ease app development:
-
-- [Shopify API library](https://github.com/Shopify/shopify-node-api) adds OAuth to the Express backend. This lets users install the app and grant scope permissions.
-- [App Bridge React](https://shopify.dev/docs/apps/tools/app-bridge/getting-started/using-react) adds [authentication to API requests](https://shopify.dev/docs/api/app-bridge-library/apis/resource-fetching) in the frontend and renders components outside of the App’s iFrame.
-- [Polaris React](https://polaris.shopify.com/) is a powerful design system and component library that helps developers build high quality, consistent experiences for Shopify merchants.
-- [File-based routing](https://github.com/Shopify/shopify-frontend-template-react/blob/main/Routes.jsx) makes creating new pages easier.
-- [`@shopify/i18next-shopify`](https://github.com/Shopify/i18next-shopify) is a plugin for [`i18next`](https://www.i18next.com/) that allows translation files to follow the same JSON schema used by Shopify [app extensions](https://shopify.dev/docs/apps/checkout/best-practices/localizing-ui-extensions#how-it-works) and [themes](https://shopify.dev/docs/themes/architecture/locales/storefront-locale-files#usage).
-
-## Getting started
-
-### Requirements
-
-1. You must [download and install Node.js](https://nodejs.org/en/download/) if you don't already have it.
-1. You must [create a Shopify partner account](https://partners.shopify.com/signup) if you don’t have one.
-1. You must create a store for testing if you don't have one, either a [development store](https://help.shopify.com/en/partners/dashboard/development-stores#create-a-development-store) or a [Shopify Plus sandbox store](https://help.shopify.com/en/partners/dashboard/managing-stores/plus-sandbox-store).
-
-### Installing the template
-
-This template can be installed using your preferred package manager:
-
-Using yarn:
-
-```shell
-yarn create @shopify/app --template=node
+```
+shopify-boilerplate/
+├── server.js                  # Entry point (wires modules, Express, MongoDB)
+├── core/                      # Reusable core modules
+│   ├── auth/                  # OAuth handlers & session management
+│   ├── billing/               # Billing utilities & subscription logic
+│   ├── gdpr/                  # GDPR compliance handlers
+│   ├── webhooks/              # Webhook router & processors
+│   ├── db/                    # Database schemas & models
+│   ├── jobs/                  # Cron jobs & background tasks
+│   └── utils/                 # Shared helpers & API wrappers
+├── apps/                      # Individual app modules
+│   └── profit-analyser/
+│       ├── backend/           # Express routes & controllers
+│       └── frontend/          # React app
+├── config/                    # Environment configurations
+│   ├── dev.json              # Development settings
+│   └── prod.json              # Production settings
+└── create-app.js              # App generator script
 ```
 
-Using npm:
+## 🚀 Quick Start
 
-```shell
-npm init @shopify/app@latest -- --template=node
+### 1. Install Dependencies
+```bash
+cd backend
+npm install
 ```
 
-Using pnpm:
-
-```shell
-pnpm create @shopify/app@latest --template=node
+### 2. Setup Environment
+```bash
+# Copy and configure your environment variables
+cp .env.example .env
 ```
 
-This will clone the template and install the required dependencies.
-
-#### Local Development
-
-[The Shopify CLI](https://shopify.dev/docs/apps/tools/cli) connects to an app in your Partners dashboard. It provides environment variables, runs commands in parallel, and updates application URLs for easier development.
-
-You can develop locally using your preferred package manager. Run one of the following commands from the root of your app.
-
-Using yarn:
-
-```shell
-yarn dev
-```
-
-Using npm:
-
-```shell
+### 3. Start Development Server
+```bash
 npm run dev
 ```
 
-Using pnpm:
-
-```shell
-pnpm run dev
+### 4. Create a New App
+```bash
+npm run create-app email-marketing
 ```
 
-Open the URL generated in your console. Once you grant permission to the app, you can start development.
+## 🎯 Available Endpoints
 
-## Deployment
+### Core APIs
+- `/api/health` - Server health check
+- `/api/auth/*` - Authentication & session management
+- `/api/billing/*` - Subscriptions & payment processing
+- `/api/webhooks/*` - Webhook handling
+- `/api/gdpr/*` - GDPR compliance endpoints
 
-### Application Storage
+### App APIs
+- `/api/profit-analyser/*` - Profit analysis features
 
-This template uses [SQLite](https://www.sqlite.org/index.html) to store session data. The database is a file called `database.sqlite` which is automatically created in the root. This use of SQLite works in production if your app runs as a single instance.
+## 🔧 Core Features
 
-The database that works best for you depends on the data your app needs and how it is queried. You can run your database of choice on a server yourself or host it with a SaaS company. Here’s a short list of databases providers that provide a free tier to get started:
+### 🔐 Authentication (`/core/auth/`)
+- **Complete OAuth Flow** - Shopify app installation & authorization
+- **Session Management** - Secure session handling with MongoDB
+- **Logout System** - Comprehensive session cleanup
+- **Middleware Protection** - `validateSession` for route protection
 
-| Database   | Type             | Hosters                                                                                                                                                                                                                               |
-| ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MySQL      | SQL              | [Digital Ocean](https://www.digitalocean.com/try/managed-databases-mysql), [Planet Scale](https://planetscale.com/), [Amazon Aurora](https://aws.amazon.com/rds/aurora/), [Google Cloud SQL](https://cloud.google.com/sql/docs/mysql) |
-| PostgreSQL | SQL              | [Digital Ocean](https://www.digitalocean.com/try/managed-databases-postgresql), [Amazon Aurora](https://aws.amazon.com/rds/aurora/), [Google Cloud SQL](https://cloud.google.com/sql/docs/postgres)                                   |
-| Redis      | Key-value        | [Digital Ocean](https://www.digitalocean.com/try/managed-databases-redis), [Amazon MemoryDB](https://aws.amazon.com/memorydb/)                                                                                                        |
-| MongoDB    | NoSQL / Document | [Digital Ocean](https://www.digitalocean.com/try/managed-databases-mongodb), [MongoDB Atlas](https://www.mongodb.com/atlas/database)                                                                                                  |
+### 💳 Billing (`/core/billing/`)
+- **Subscription Plans** - Flexible billing plan management
+- **Shopify Integration** - Native recurring charge handling
+- **Development Mode** - Mock billing for development stores
+- **Plan Management** - Create, update, cancel subscriptions
 
-To use one of these, you need to change your session storage configuration. To help, here’s a list of [SessionStorage adapter packages](https://github.com/Shopify/shopify-api-js/blob/main/packages/shopify-api/docs/guides/session-storage.md).
+### 🌐 API Wrappers (`/core/utils/api.js`)
+- **REST Client** - Simplified Shopify REST API calls
+- **GraphQL Client** - Query and mutation handling
+- **Factory Pattern** - Easy client creation per shop
+- **Error Handling** - Comprehensive error management
 
-### Build
+### 🔗 Webhooks (`/core/webhooks/`)
+- **Default Handlers** - App uninstall, GDPR compliance
+- **Extensible System** - Easy custom webhook registration
+- **Automatic Verification** - Built-in Shopify webhook verification
 
-The frontend is a single page app. It requires the `SHOPIFY_API_KEY`, which you can find on the page for your app in your partners dashboard. Paste your app’s key in the command for the package manager of your choice:
+### 📊 Database (`/core/db/`)
+- **MongoDB Integration** - Robust database connection
+- **Pre-built Models** - Store, BillingPlan, BillingSubscription
+- **Session Storage** - Encrypted session management
 
-Using yarn:
+### 🛡️ GDPR (`/core/gdpr/`)
+- **Data Requests** - Customer data export functionality
+- **Data Erasure** - Customer and shop data deletion
+- **Compliance Logging** - Audit trail for GDPR requests
 
-```shell
-cd web/frontend/ && SHOPIFY_API_KEY=REPLACE_ME yarn build
+### ⏰ Background Jobs (`/core/jobs/`)
+- **Cron Scheduling** - Built-in job scheduler
+- **Default Jobs** - Session cleanup, billing sync, health checks
+- **Extensible** - Easy to add custom background tasks
+
+## 📱 Building Apps
+
+### Create New App
+```bash
+npm run create-app your-app-name
 ```
 
-Using npm:
+### Add to Server
+```javascript
+// server.js
+import yourAppRoutes from "./apps/your-app-name/backend/routes/index.js";
 
-```shell
-cd web/frontend/ && SHOPIFY_API_KEY=REPLACE_ME npm run build
+function mountAppRoutes(app) {
+  app.use("/api/your-app-name", yourAppRoutes);
+}
 ```
 
-Using pnpm:
-
-```shell
-cd web/frontend/ && SHOPIFY_API_KEY=REPLACE_ME pnpm run build
+### App Structure
+```
+apps/your-app-name/
+├── backend/
+│   ├── routes/
+│   │   ├── index.js
+│   │   └── specificRoutes.js
+│   ├── controllers/
+│   │   └── YourController.js
+│   └── services/
+│       └── YourService.js
+└── frontend/
+    └── components/
 ```
 
-You do not need to build the backend.
+## ⚙️ Configuration
 
-## Hosting
-
-When you're ready to set up your app in production, you can follow [our deployment documentation](https://shopify.dev/docs/apps/deployment/web) to host your app on a cloud provider like [Heroku](https://www.heroku.com/) or [Fly.io](https://fly.io/).
-
-When you reach the step for [setting up environment variables](https://shopify.dev/docs/apps/deployment/web#set-env-vars), you also need to set the variable `NODE_ENV=production`.
-
-## Known issues
-
-### Hot module replacement and Firefox
-
-When running the app with the CLI in development mode on Firefox, you might see your app constantly reloading when you access it.
-That happened in previous versions of the CLI, because of the way HMR websocket requests work.
-
-We fixed this issue with v3.4.0 of the CLI, so after updating it, you can make the following changes to your app's `web/frontend/vite.config.js` file:
-
-1. Change the definition `hmrConfig` object to be:
-
-   ```js
-   const host = process.env.HOST
-     ? process.env.HOST.replace(/https?:\/\//, "")
-     : "localhost";
-
-   let hmrConfig;
-   if (host === "localhost") {
-     hmrConfig = {
-       protocol: "ws",
-       host: "localhost",
-       port: 64999,
-       clientPort: 64999,
-     };
-   } else {
-     hmrConfig = {
-       protocol: "wss",
-       host: host,
-       port: process.env.FRONTEND_PORT,
-       clientPort: 443,
-     };
-   }
-   ```
-
-1. Change the `server.host` setting in the configs to `"localhost"`:
-
-   ```js
-   server: {
-     host: "localhost",
-     ...
-   ```
-
-### I can't get past the ngrok "Visit site" page
-
-When you’re previewing your app or extension, you might see an ngrok interstitial page with a warning:
-
-```text
-You are about to visit <id>.ngrok.io: Visit Site
+### Development (`config/dev.json`)
+```json
+{
+  "server": { "port": 3000 },
+  "database": { "mongodb": { "uri": "mongodb://localhost:27017/app-dev" } },
+  "billing": { "mock_mode": true },
+  "logging": { "level": "debug" }
+}
 ```
 
-If you click the `Visit Site` button, but continue to see this page, then you should run dev using an alternate tunnel URL that you run using tunneling software.
-We've validated that [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/run-tunnel/trycloudflare/) works with this template.
-
-To do that, you can [install the `cloudflared` CLI tool](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/), and run:
-
-```shell
-# Note that you can also use a different port
-cloudflared tunnel --url http://localhost:3000
+### Production (`config/prod.json`)
+```json
+{
+  "server": { "port": 3000 },
+  "database": { "mongodb": { "uri": "${MONGODB_URI}" } },
+  "billing": { "mock_mode": false },
+  "security": { "rate_limiting": true }
+}
 ```
 
-Out of the logs produced by cloudflare you will notice a https URL where the domain ends with `trycloudflare.com`. This is your tunnel URL. You need to copy this URL as you will need it in the next step.
+## 🎯 Example Apps You Can Build
 
-```shell
-2022-11-11T19:57:55Z INF Requesting new quick Tunnel on trycloudflare.com...
-2022-11-11T19:57:58Z INF +--------------------------------------------------------------------------------------------+
-2022-11-11T19:57:58Z INF |  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
-2022-11-11T19:57:58Z INF |  https://randomly-generated-hostname.trycloudflare.com                                     |
-2022-11-11T19:57:58Z INF +--------------------------------------------------------------------------------------------+
+- **Email Marketing** - Campaign management, templates, analytics
+- **Inventory Manager** - Stock tracking, alerts, reports
+- **Customer Analytics** - Behavior analysis, segmentation
+- **Review Manager** - Review collection, moderation, display
+- **SEO Optimizer** - Meta tags, sitemaps, performance
+
+## 🚀 Deployment
+
+### Build for Production
+```bash
+npm run serve
 ```
 
-Below you would replace `randomly-generated-hostname` with what you have copied from the terminal. In a different terminal window, navigate to your app's root and with the URL from above you would call:
-
-```shell
-# Using yarn
-yarn dev --tunnel-url https://randomly-generated-hostname.trycloudflare.com:3000
-# or using npm
-npm run dev --tunnel-url https://randomly-generated-hostname.trycloudflare.com:3000
-# or using pnpm
-pnpm dev --tunnel-url https://randomly-generated-hostname.trycloudflare.com:3000
+### Environment Variables
+```bash
+NODE_ENV=production
+MONGODB_URI=your_mongodb_connection_string
+SHOPIFY_API_KEY=your_api_key
+SHOPIFY_API_SECRET=your_api_secret
+# ... other variables
 ```
 
-## Developer resources
+## 📚 Scripts
 
-- [Introduction to Shopify apps](https://shopify.dev/docs/apps/getting-started)
-- [App authentication](https://shopify.dev/docs/apps/auth)
-- [Shopify CLI](https://shopify.dev/docs/apps/tools/cli)
-- [Shopify API Library documentation](https://github.com/Shopify/shopify-api-js#readme)
-- [Getting started with internationalizing your app](https://shopify.dev/docs/apps/best-practices/internationalization/getting-started)
-  - [i18next](https://www.i18next.com/)
-    - [Configuration options](https://www.i18next.com/overview/configuration-options)
-  - [react-i18next](https://react.i18next.com/)
-    - [`useTranslation` hook](https://react.i18next.com/latest/usetranslation-hook)
-    - [`Trans` component usage with components array](https://react.i18next.com/latest/trans-component#alternative-usage-components-array)
-  - [i18n-ally VS Code extension](https://marketplace.visualstudio.com/items?itemName=Lokalise.i18n-ally)
+```bash
+npm run dev          # Start development server
+npm run serve        # Start production server
+npm run create-app   # Generate new app from template
+npm run dev:legacy   # Use old server structure
+```
+
+## 🔒 Security Features
+
+- **Session Validation** - All routes protected with valid Shopify sessions
+- **GDPR Compliance** - Built-in data handling and erasure
+- **Webhook Verification** - Automatic Shopify webhook verification
+- **CORS Protection** - Configured for specific origins
+- **Environment Security** - Secure configuration management
+
+## 🎉 Benefits
+
+### For Developers
+- **5-minute setup** - From idea to working app
+- **No boilerplate** - Focus on business logic, not infrastructure
+- **Consistent patterns** - Same structure across all apps
+- **Production ready** - Security, error handling, monitoring built-in
+
+### For Businesses
+- **Rapid prototyping** - Test ideas quickly
+- **Scalable architecture** - Grows with your needs
+- **Cost effective** - Shared infrastructure across apps
+- **Maintainable** - Clean, organized codebase
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- 📖 [Documentation](./docs/)
+- 🐛 [Issue Tracker](https://github.com/your-repo/issues)
+- 💬 [Discussions](https://github.com/your-repo/discussions)
+
+---
+
+**Transform your Shopify app development with this modular, scalable boilerplate. Build faster, scale easier, maintain better.** 🚀

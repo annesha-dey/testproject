@@ -1,22 +1,39 @@
 {
-  "name": "ringarosesapp",
-  "version": "1.0.0",
-  "main": "backend/server.js",
-  "license": "UNLICENSED",
-  "scripts": {
-    "shopify": "shopify",
-    "build": "shopify app build",
-    "dev": "shopify app dev",
-    "info": "shopify app info",
-    "generate": "shopify app generate",
-    "deploy": "shopify app deploy"
-  },
-  "dependencies": {},
-  "author": "annedey",
+  "name": "shopify-app-boilerplate",
+  "version": "2.0.0",
   "private": true,
-  "workspaces": [
-    "extensions/*",
-    "backend",
-    "frontend"
-  ]
+  "license": "UNLICENSED",
+  "author": "annedey",
+  "type": "module",
+  "engines": {
+    "node": ">=16.13.0"
+  },
+  "scripts": {
+    "debug": "node --inspect-brk server.js",
+    "dev": "cross-env NODE_ENV=development PORT=3000 nodemon server.js",
+    "serve": "cross-env NODE_ENV=production PORT=3000 node server.js",
+    "create-app": "node create-app.js",
+    "build:frontend": "cd apps/profit-analyser/frontend && npm run build",
+    "dev:frontend": "cd apps/profit-analyser/frontend && npm run dev",
+    "config:link": "shopify app generate schema",
+    "config:use": "shopify app config use"
+  },
+  "dependencies": {
+    "@shopify/shopify-app-express": "^5.0.8",
+    "@shopify/shopify-app-session-storage-sqlite": "^4.0.8",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "cryptr": "^6.4.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "mongoose": "^8.19.0",
+    "node-cron": "^3.0.3",
+    "serve-static": "^1.14.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15",
+    "prettier": "^2.6.2",
+    "pretty-quick": "^3.1.3"
+  }
 }
