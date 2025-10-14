@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+import { ProductsCard } from "../components";
+import AppLayout from "../components/Layout/AppLayout";
 import { useSearchParams } from "react-router-dom";
 import {
   Card,
   Page,
   Layout,
   Text,
-  Badge,
   ResourceList,
   ResourceItem,
   Thumbnail,
@@ -46,7 +47,8 @@ export default function ProductsPage() {
   ];
 
   return (
-    <Page
+    <AppLayout>
+      <Page
       title="Products"
       subtitle="Manage your store products"
       primaryAction={{
@@ -106,6 +108,7 @@ export default function ProductsPage() {
           </Card>
         </Layout.Section>
       </Layout>
-    </Page>
+      </Page>
+    </AppLayout>
   );
 }

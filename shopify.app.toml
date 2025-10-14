@@ -2,7 +2,7 @@
 
 client_id = "f5bd8f7334cc8364aa3a3b7ff9fb19bd"
 name = "ringarosesapp"
-application_url = "https://2e8a92d93a31.ngrok-free.app"
+application_url = "https://228c4be010cb.ngrok-free.app"
 embedded = false
 
 [build]
@@ -16,4 +16,4 @@ api_version = "2026-01"
 scopes = "write_products"
 
 [auth]
-redirect_urls = [ "https://277949e9b10a.ngrok-free.app/api/auth/callback" ]
+redirect_urls = [ "https://e43e420e9e45.ngrok-free.app/api/auth/callback" ]

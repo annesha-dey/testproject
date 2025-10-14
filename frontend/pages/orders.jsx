@@ -13,6 +13,7 @@ import {
   Button,
   EmptyState,
 } from "@shopify/polaris";
+import AppLayout from "../components/Layout/AppLayout";
 
 export default function OrdersPage() {
   const [searchParams] = useSearchParams();
@@ -43,63 +44,65 @@ export default function OrdersPage() {
   ];
 
   return (
-    <Page
-      title="Orders"
-      subtitle="Manage your store orders"
-      primaryAction={{
-        content: 'Create order',
-        onAction: () => console.log('Create order'),
-      }}
-      secondaryActions={[
-        {
-          content: 'Export',
-          onAction: () => console.log('Export orders'),
-        },
-      ]}
-    >
-      <Layout>
-        <Layout.Section>
-          <Card>
-            <ResourceList
-              resourceName={{singular: 'order', plural: 'orders'}}
-              items={orders}
-              renderItem={(item) => {
-                const {id, customer, total, status, date} = item;
-                const statusColor = status === 'fulfilled' ? 'success' : 
-                                  status === 'shipped' ? 'info' : 'warning';
-                
-                return (
-                  <ResourceItem
-                    id={id}
-                    accessibilityLabel={`View details for order ${id}`}
-                    onClick={() => console.log(`View order ${id}`)}
-                  >
-                    <Stack alignment="center">
-                      <Avatar customer size="medium" name={customer} />
-                      <Stack.Item fill>
-                        <Stack vertical spacing="extraTight">
+    <AppLayout>
+      <Page
+        title="Orders"
+        subtitle="Manage your store orders"
+        primaryAction={{
+          content: 'Create order',
+          onAction: () => console.log('Create order'),
+        }}
+        secondaryActions={[
+          {
+            content: 'Export',
+            onAction: () => console.log('Export orders'),
+          },
+        ]}
+      >
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <ResourceList
+                resourceName={{singular: 'order', plural: 'orders'}}
+                items={orders}
+                renderItem={(item) => {
+                  const {id, customer, total, status, date} = item;
+                  const statusColor = status === 'fulfilled' ? 'success' : 
+                                    status === 'shipped' ? 'info' : 'warning';
+                  
+                  return (
+                    <ResourceItem
+                      id={id}
+                      accessibilityLabel={`View details for order ${id}`}
+                      onClick={() => console.log(`View order ${id}`)}
+                    >
+                      <Stack alignment="center">
+                        <Avatar customer size="medium" name={customer} />
+                        <Stack.Item fill>
+                          <Stack vertical spacing="extraTight">
+                            <Text variant="bodyMd" fontWeight="bold">
+                              Order #{id}
+                            </Text>
+                            <Text variant="bodySm" tone="subdued">
+                              {customer} • {date}
+                            </Text>
+                          </Stack>
+                        </Stack.Item>
+                        <Stack vertical alignment="trailing">
                           <Text variant="bodyMd" fontWeight="bold">
-                            Order #{id}
+                            {total}
                           </Text>
-                          <Text variant="bodySm" tone="subdued">
-                            {customer} • {date}
-                          </Text>
+                          <Badge status={statusColor}>{status}</Badge>
                         </Stack>
-                      </Stack.Item>
-                      <Stack vertical alignment="trailing">
-                        <Text variant="bodyMd" fontWeight="bold">
-                          {total}
-                        </Text>
-                        <Badge status={statusColor}>{status}</Badge>
                       </Stack>
-                    </Stack>
-                  </ResourceItem>
-                );
-              }}
-            />
-          </Card>
-        </Layout.Section>
-      </Layout>
-    </Page>
+                    </ResourceItem>
+                  );
+                }}
+              />
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Page>
+    </AppLayout>
   );
 }

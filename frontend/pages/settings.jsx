@@ -13,6 +13,7 @@ import {
   Select,
   Checkbox,
 } from "@shopify/polaris";
+import AppLayout from "../components/Layout/AppLayout";
 
 export default function SettingsPage() {
   const [searchParams] = useSearchParams();
@@ -40,7 +41,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <Page
+    <AppLayout>
+      <Page
       title="Settings"
       subtitle="Configure your app preferences"
       primaryAction={{
@@ -129,6 +131,7 @@ export default function SettingsPage() {
           </Card>
         </Layout.Section>
       </Layout>
-    </Page>
+      </Page>
+    </AppLayout>
   );
 }

@@ -1,6 +1,7 @@
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, useLocation } from "react-router-dom";
 import Routes from "./Routes";
 import AppLayout from "./components/Layout/AppLayout";
+import AuthGuard from "./components/Auth/AuthGuard";
 import "./assets/shopify-theme.css";
 
 import {
@@ -8,18 +9,34 @@ import {
   PolarisProvider,
 } from "./components";
 
-export default function App() {
-  // Any .tsx or .jsx files in /pages will become a route
-  // See documentation for <Routes /> for more info
+function AppContent() {
+  const location = useLocation();
   const pages = import.meta.glob("./pages/**/!(*.test.[jt]sx)*.([jt]sx)", { eager: true });
+  
+  // Routes that should not have the AppLayout (sidebar/navigation)
+  const noLayoutRoutes = ['/login', '/exitiframe'];
+  const shouldShowLayout = !noLayoutRoutes.includes(location.pathname);
 
+  if (shouldShowLayout) {
+    return (
+      <AuthGuard>
+        <AppLayout>
+          <Routes pages={pages} />
+        </AppLayout>
+      </AuthGuard>
+    );
+  }
+
+  // For login page, render without layout and without auth guard
+  return <Routes pages={pages} />;
+}
+
+export default function App() {
   return (
     <PolarisProvider>
       <BrowserRouter>
         <QueryProvider>
-          <AppLayout>
-            <Routes pages={pages} />
-          </AppLayout>
+          <AppContent />
         </QueryProvider>
       </BrowserRouter>
     </PolarisProvider>

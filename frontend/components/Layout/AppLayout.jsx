@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { logout, redirectToLogin } from '../../utils/auth';
 import {
   AppProvider,
   Frame,
@@ -40,6 +41,9 @@ export default function AppLayout({ children }) {
   const [storeName, setStoreName] = useState('Ring a Roses Store');
   const [supportSubject, setSupportSubject] = useState('');
   const [supportMessage, setSupportMessage] = useState('');
+  const [toastActive, setToastActive] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastError, setToastError] = useState(false);
 
   const handleSearchResultsDismiss = () => {
     setSearchActive(false);
@@ -72,6 +76,40 @@ export default function AppLayout({ children }) {
     navigateWithShop(path);
   };
 
+  const handleLogout = async () => {
+    try {
+      setIsLoading(true);
+      
+      const result = await logout(shop);
+
+      if (result.success) {
+        setToastMessage('Logged out successfully');
+        setToastError(false);
+        setToastActive(true);
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          redirectToLogin();
+        }, 1000);
+      } else {
+        throw new Error(result.error || 'Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      setToastMessage('Failed to logout. Please try again.');
+      setToastError(true);
+      setToastActive(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToShopify = () => {
+    if (shop) {
+      window.open(`https://${shop}/admin`, '_blank');
+    }
+  };
+
   const logo = {
     width: 124,
     topBarSource: '/logo.svg',
@@ -84,15 +122,32 @@ export default function AppLayout({ children }) {
     <TopBar.UserMenu
       actions={[
         {
-          items: [{ content: '🔙 Back to Shopify' }],
+          items: [
+            { 
+              content: '🔙 Back to Shopify',
+              onAction: handleBackToShopify
+            }
+          ],
         },
         {
-          items: [{ content: 'Community forums' }],
+          items: [
+            { content: 'Community forums' },
+            { content: 'Help & Support' }
+          ],
+        },
+        {
+          items: [
+            { 
+              content: '🚪 Logout',
+              onAction: handleLogout,
+              destructive: true
+            }
+          ],
         },
       ]}
       name="Ring a Roses"
-      detail={storeName}
-      initials={storeName.split(' ').map(name => name[0]).join('')}
+      detail={shop || storeName}
+      initials={(shop || storeName).split(' ').map(name => name[0]).join('').toUpperCase()}
       open={userMenuOpen}
       onToggle={setUserMenuOpen}
     />
@@ -133,8 +188,8 @@ export default function AppLayout({ children }) {
         items={[
           {
             label: '🏠 Home',
-            onClick: handleNavClick('/'),
-            selected: location.pathname === '/',
+            onClick: handleNavClick('/home'),
+            selected: location.pathname === '/home',
           },
           {
             label: '📋 Orders',
@@ -216,6 +271,14 @@ export default function AppLayout({ children }) {
 
   const loadingMarkup = isLoading ? <Loading /> : null;
 
+  const toastMarkup = toastActive ? (
+    <Toast
+      content={toastMessage}
+      error={toastError}
+      onDismiss={() => setToastActive(false)}
+    />
+  ) : null;
+
   const actualPageMarkup = (
     <Frame
       logo={logo}
@@ -227,6 +290,7 @@ export default function AppLayout({ children }) {
     >
       {contextualSaveBarMarkup}
       {loadingMarkup}
+      {toastMarkup}
       <div id="main-content">
         {children}
       </div>

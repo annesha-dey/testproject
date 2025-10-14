@@ -17,7 +17,7 @@ export function ProductsCard() {
   } = useQuery({
     queryKey: ["productCount"],
     queryFn: async () => {
-      const backendUrl = "https://277949e9b10a.ngrok-free.app";
+      const backendUrl = "https://e43e420e9e45.ngrok-free.app";
       const urlParams = new URLSearchParams(window.location.search);
       const shop = urlParams.get("shop");
       
@@ -36,7 +36,7 @@ export function ProductsCard() {
     setIsPopulating(true);
     setMessage("");
     
-    const backendUrl = "https://277949e9b10a.ngrok-free.app";
+    const backendUrl = "https://e43e420e9e45.ngrok-free.app";
     const urlParams = new URLSearchParams(window.location.search);
     const shop = urlParams.get("shop");
     

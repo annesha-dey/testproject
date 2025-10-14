@@ -55,8 +55,8 @@ const app = express();
 // CORS configuration for multiple origins
 const corsOptions = {
   origin: [
-    'https://2e8a92d93a31.ngrok-free.app',
-    'https://277949e9b10a.ngrok-free.app',
+    'https://228c4be010cb.ngrok-free.app',
+    'https://e43e420e9e45.ngrok-free.app',
     'http://localhost:5173',
     'http://localhost:3000'
   ],
@@ -100,9 +100,9 @@ app.get(
       // Continue with redirect even if there's an error to avoid breaking the flow
     }
 
-    // For non-embedded apps, redirect directly to frontend with shop parameter
+    // For non-embedded apps, redirect directly to frontend home page with shop parameter
     const frontendUrl = process.env.VITE_SHOPIFY_APP_URL || appUrl;
-    res.redirect(`${frontendUrl}?shop=${shop}`);
+    res.redirect(`${frontendUrl}/home?shop=${shop}`);
   }
 );
 app.post(

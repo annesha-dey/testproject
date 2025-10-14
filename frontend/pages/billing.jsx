@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import BillingPlans from '../components/BillingPlans';
+import BillingPlans from "../components/BillingPlans";
+import AppLayout from "../components/Layout/AppLayout";
 import {
   Page,
   Banner,
@@ -73,11 +74,12 @@ const BillingPage = () => {
   }, [searchParams]);
 
   const handleBackToDashboard = () => {
-    window.location.href = `/?shop=${shop}`;
+    window.location.href = `/home?shop=${shop}`;
   };
 
   return (
-    <Page
+    <AppLayout>
+      <Page
       title="Billing & Subscriptions"
       subtitle={shop ? `Manage billing for ${shop}` : 'Manage your app subscriptions'}
       backAction={shop ? {
@@ -273,7 +275,8 @@ const BillingPage = () => {
           </Layout.Section>
         )}
       </Layout>
-    </Page>
+      </Page>
+    </AppLayout>
   );
 };
 

@@ -8,7 +8,7 @@ export const getApiBaseUrl = () => {
   }
   
   // If we're accessing via ngrok or production, use the backend URL directly
-  return 'https://277949e9b10a.ngrok-free.app';
+  return 'https://e43e420e9e45.ngrok-free.app';
 };
 
 /**
