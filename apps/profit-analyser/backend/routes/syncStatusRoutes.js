@@ -189,4 +189,59 @@ router.get("/sync-progress", validateSession, async (req, res) => {
   }
 });
 
+// Manual data cleanup endpoint (for testing/admin purposes)
+router.post("/cleanup-data", validateSession, async (req, res) => {
+  try {
+    console.log("🗑️ [SYNC-STATUS] Manual data cleanup request:", req.query);
+    
+    const { shop } = req.query;
+    const { confirm } = req.body;
+    
+    if (!shop) {
+      console.error("❌ [SYNC-STATUS] No shop parameter provided");
+      return res.status(400).json({ success: false, error: "Shop parameter is required" });
+    }
+    
+    if (!confirm || confirm !== 'DELETE_ALL_DATA') {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Confirmation required. Send { confirm: 'DELETE_ALL_DATA' } in request body" 
+      });
+    }
+    
+    console.log(`🔄 [SYNC-STATUS] Starting manual data cleanup for ${shop}...`);
+    
+    // Import and execute data cleanup
+    const { executeDataCleanup } = await import("../../../../core/jobs/dataCleanupJob.js");
+    
+    const result = await executeDataCleanup(shop, {
+      trigger: 'manual_api',
+      triggeredAt: new Date(),
+      triggeredBy: 'admin'
+    });
+    
+    if (result.success) {
+      console.log(`✅ [SYNC-STATUS] Manual data cleanup completed for ${shop}`);
+      
+      res.json({
+        success: true,
+        message: "Data cleanup completed successfully",
+        data: result
+      });
+    } else {
+      console.error(`❌ [SYNC-STATUS] Manual data cleanup failed for ${shop}:`, result.error);
+      
+      res.status(500).json({
+        success: false,
+        error: result.error,
+        data: result
+      });
+    }
+    
+  } catch (error) {
+    console.error("❌ [SYNC-STATUS] Error during manual data cleanup:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;

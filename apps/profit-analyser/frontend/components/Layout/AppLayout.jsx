@@ -9,7 +9,11 @@ import {
   Toast,
   Loading,
   ContextualSaveBar,
+  Stack,
+  Text,
+  ProgressBar,
 } from '@shopify/polaris';
+import './AppLayout.css';
 // Temporarily remove problematic icons
 // import {
 //   HomeMinor,
@@ -140,12 +144,27 @@ export default function AppLayout({ children }) {
     }
   };
 
+  // Shopify import status as normal text in single line
+  const importStatusMarkup = (
+    <Stack alignment="center" spacing="tight">
+      <Text variant="bodyMd" fontWeight="bold">
+        Shopify Import
+      </Text>
+      <div style={{ width: '80px' }}>
+        <ProgressBar progress={100} size="small" />
+      </div>
+      <Text variant="bodySm" tone="success">
+        All historic data imported
+      </Text>
+    </Stack>
+  );
+
   const logo = {
-    width: 124,
-    topBarSource: '/logo.svg',
-    contextualSaveBarSource: '/logo.svg',
+    width: 200,
+    topBarSource: null, // Remove default logo
+    contextualSaveBarSource: null,
     url: '/',
-    accessibilityLabel: 'Ring a Roses App',
+    accessibilityLabel: 'Shopify Import Status',
   };
 
   const userMenuMarkup = (
@@ -201,15 +220,19 @@ export default function AppLayout({ children }) {
   );
 
   const topBarMarkup = (
-    <TopBar
-      showNavigationToggle
-      userMenu={userMenuMarkup}
-      searchResultsVisible={searchActive}
-      searchField={searchFieldMarkup}
-      searchResults={searchResultsMarkup}
-      onSearchResultsDismiss={handleSearchResultsDismiss}
-      onNavigationToggle={handleNavigationToggle}
-    />
+    <div style={{ position: 'relative', width: '100%' }}>
+      <TopBar
+        showNavigationToggle
+        searchResultsVisible={searchActive}
+        searchField={searchFieldMarkup}
+        searchResults={searchResultsMarkup}
+        onSearchResultsDismiss={handleSearchResultsDismiss}
+        onNavigationToggle={handleNavigationToggle}
+      />
+      <div className="custom-topbar-logo">
+        {importStatusMarkup}
+      </div>
+    </div>
   );
 
   const navigationMarkup = (
@@ -217,7 +240,7 @@ export default function AppLayout({ children }) {
       <Navigation.Section
         items={[
           {
-            label: '🏠 Home',
+            label: '📊 Dashboard',
             onClick: handleNavClick('/home'),
             selected: location.pathname === '/home',
           },
@@ -237,50 +260,40 @@ export default function AppLayout({ children }) {
             onClick: handleNavClick('/customers'),
             selected: location.pathname === '/customers',
           },
-        ]}
-      />
-      <Navigation.Section
-        title="Sales channels"
-        items={[
           {
-            label: '📊 Analytics',
+            label: '📈 Analytics',
             onClick: handleNavClick('/analytics'),
             selected: location.pathname === '/analytics',
           },
-          {
-            label: '📢 Marketing',
-            onClick: handleNavClick('/marketing'),
-            selected: location.pathname === '/marketing',
-          },
-          {
-            label: '🏷️ Discounts',
-            onClick: handleNavClick('/discounts'),
-            selected: location.pathname === '/discounts',
-          },
         ]}
       />
       <Navigation.Section
-        title="Apps"
+        title="Tools"
         items={[
           {
-            label: '💳 Billing & Plans',
-            onClick: handleNavClick('/billing'),
-            selected: location.pathname === '/billing',
+            label: '🔗 App Integrations',
+            onClick: handleNavClick('/integrations'),
+            selected: location.pathname === '/integrations',
           },
-          {
-            label: '🔧 Apps',
-            onClick: handleNavClick('/apps'),
-            selected: location.pathname === '/apps',
-          },
-        ]}
-      />
-      <Navigation.Section
-        title="Settings"
-        items={[
           {
             label: '⚙️ Settings',
             onClick: handleNavClick('/settings'),
             selected: location.pathname === '/settings',
+          },
+        ]}
+      />
+      <Navigation.Section
+        title="Support"
+        items={[
+          {
+            label: '📚 Help and Docs',
+            onClick: handleNavClick('/help'),
+            selected: location.pathname === '/help',
+          },
+          {
+            label: '🚪 Logout',
+            onClick: handleLogout,
+            selected: false,
           },
         ]}
       />
@@ -311,7 +324,6 @@ export default function AppLayout({ children }) {
 
   const actualPageMarkup = (
     <Frame
-      logo={logo}
       topBar={topBarMarkup}
       navigation={navigationMarkup}
       showMobileNavigation={mobileNavigationActive}

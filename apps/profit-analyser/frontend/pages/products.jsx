@@ -34,7 +34,7 @@ export default function ProductsPage() {
         console.log(`🔄 [PRODUCTS PAGE] Fetching products for shop: ${shop}`);
         
         const backendUrl = "https://e43e420e9e45.ngrok-free.app";
-        const response = await fetch(`${backendUrl}/api/profit-analyser/analytics/dashboard?shop=${shop}`, {
+        const response = await fetch(`${backendUrl}/api/profit-analyser/products-data/list?shop=${shop}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -50,21 +50,28 @@ export default function ProductsPage() {
         const data = await response.json();
         console.log(`✅ [PRODUCTS PAGE] Products data received:`, data);
         
-        // Extract top products from dashboard data
-        const topProducts = data.data?.topProducts || [];
-        
-        // Format products for display
-        const formattedProducts = topProducts.map(product => ({
-          id: product.id,
-          title: product.title || 'Untitled Product',
-          status: 'active', // Default status since we don't have this in the API response
-          inventory: 'N/A', // We don't have inventory data in current API
-          price: `$${parseFloat(product.price || 0).toFixed(2)}`,
-          image: product.image || 'https://via.placeholder.com/80x80?text=Product',
-        }));
-        
-        setProducts(formattedProducts);
-        console.log(`✅ [PRODUCTS PAGE] Formatted products:`, formattedProducts);
+        if (data.success && data.data?.products) {
+          // Format products for display
+          const formattedProducts = data.data.products.map(product => ({
+            id: product.id,
+            title: product.title || 'Untitled Product',
+            status: product.status || 'active',
+            inventory: product.totalInventory || 0,
+            totalRevenue: `$${parseFloat(product.totalRevenue || 0).toFixed(2)}`,
+            totalProfit: `$${parseFloat(product.totalProfit || 0).toFixed(2)}`,
+            profitMargin: `${product.profitMargin || 0}%`,
+            quantitySold: product.totalQuantitySold || 0,
+            variants: product.variants || 0,
+            vendor: product.vendor || 'Unknown',
+            productType: product.productType || 'General',
+          }));
+          
+          setProducts(formattedProducts);
+          console.log(`✅ [PRODUCTS PAGE] Formatted products:`, formattedProducts);
+        } else {
+          console.warn('⚠️ [PRODUCTS PAGE] No products data in response');
+          setProducts([]);
+        }
         
       } catch (err) {
         console.error(`❌ [PRODUCTS PAGE] Error fetching products:`, err);

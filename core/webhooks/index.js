@@ -21,22 +21,42 @@ export const defaultWebhookHandlers = {
     callbackUrl: "/api/webhooks/app/uninstalled",
     callback: async (topic, shop, body, webhookId) => {
       console.log(`🔄 Processing app uninstall for shop: ${shop}`);
+      console.log(`🔍 Webhook details - Topic: ${topic}, Shop: ${shop}, Body type: ${typeof body}, Body length: ${body ? body.length : 0}`);
       
       try {
-        // Deactivate the store
-        await storeManager.deactivateStore(shop);
-        
-        // Clean up sessions
-        const sessions = await shopify.config.sessionStorage.findSessionsByShop(shop);
-        if (sessions && sessions.length > 0) {
-          for (const session of sessions) {
-            await shopify.config.sessionStorage.deleteSession(session.id);
+        // Parse webhook body (handle empty/null body gracefully)
+        let webhookData = {};
+        if (body) {
+          try {
+            webhookData = typeof body === 'string' ? JSON.parse(body) : body;
+            console.log(`✅ Webhook body parsed successfully:`, webhookData);
+          } catch (e) {
+            console.warn(`⚠️ Could not parse webhook body for ${shop}:`, e.message);
+            console.warn(`⚠️ Raw body:`, body);
           }
+        } else {
+          console.warn(`⚠️ Empty webhook body received for ${shop} - proceeding with cleanup anyway`);
         }
         
-        console.log(`✅ App uninstall processed for shop: ${shop}`);
+        // Import and use the comprehensive uninstallation handler
+        const { handleAppUninstallation } = await import('./appInstallationHandler.js');
+        
+        // Execute comprehensive cleanup (even with empty body)
+        console.log(`🔄 Triggering comprehensive cleanup for ${shop}...`);
+        await handleAppUninstallation(shop, webhookData);
+        
+        console.log(`✅ Comprehensive app uninstall processed for shop: ${shop}`);
       } catch (error) {
         console.error(`❌ Error processing app uninstall for ${shop}:`, error);
+        console.error(`❌ Error stack:`, error.stack);
+        
+        // Even if there's an error, try to at least deactivate the store
+        try {
+          await storeManager.deactivateStore(shop);
+          console.log(`✅ Fallback: Store deactivated for ${shop}`);
+        } catch (fallbackError) {
+          console.error(`❌ Fallback deactivation also failed for ${shop}:`, fallbackError);
+        }
       }
     }
   },

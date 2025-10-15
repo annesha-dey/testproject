@@ -1,0 +1,173 @@
+/* Custom spacing for AppLayout - 15px gap between sidebar and content */
+
+/* Main frame content area - optimized positioning and spacing */
+.Polaris-Frame__Main,
+#AppFrameMain {
+  margin-left: 140px !important;
+  padding-left: 15px !important;
+  padding-right: 20px !important;
+  padding-top: 15px !important;
+  padding-bottom: 0px !important;
+}
+
+/* Content area - remove default padding */
+.Polaris-Frame__Content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Main content container */
+#main-content {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Page component spacing - remove left padding since frame handles it */
+.Polaris-Page {
+  padding: 20px 0 20px 0 !important;
+  margin: 0 !important;
+  max-width: none !important;
+}
+
+/* Page header spacing */
+.Polaris-Page__Header {
+  margin-bottom: 20px !important;
+  padding: 0 !important;
+}
+
+/* Page content area */
+.Polaris-Page__Content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Layout sections spacing */
+.Polaris-Layout {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Layout section spacing for card containers */
+.Polaris-Layout__Section {
+  padding: 0 10px 0 0 !important; /* Add 10px right padding for horizontal spacing */
+  margin: 0 0 20px 0 !important;
+}
+
+.Polaris-Layout__Section:last-child {
+  margin-bottom: 0 !important;
+  padding-right: 0 !important; /* Remove right padding from last section */
+}
+
+/* Card spacing adjustments - proper gaps between cards */
+.Polaris-Card {
+  margin-bottom: 20px !important;
+  margin-top: 0 !important;
+}
+
+.Polaris-Card:last-child {
+  margin-bottom: 20px !important;
+}
+
+/* Specific spacing for card grids */
+.Polaris-Layout__Section--oneThird,
+.Polaris-Layout__Section--oneHalf {
+  padding-right: 15px !important; /* Horizontal spacing between grid cards */
+}
+
+.Polaris-Layout__Section--oneThird:last-child,
+.Polaris-Layout__Section--oneHalf:last-child {
+  padding-right: 0 !important; /* Remove right padding from last grid item */
+}
+
+.Polaris-Layout__Section--oneThird .Polaris-Card,
+.Polaris-Layout__Section--oneHalf .Polaris-Card {
+  margin-bottom: 20px !important;
+  margin-right: 0 !important;
+  height: auto !important;
+}
+
+/* Stack spacing within cards */
+.Polaris-Card .Polaris-Stack {
+  margin: 0 !important;
+}
+
+/* Additional spacing for card sections */
+.Polaris-Card__Section {
+  padding: 20px !important;
+}
+
+/* Stack spacing */
+.Polaris-Stack {
+  margin: 0 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .Polaris-Frame__Main {
+    margin-left: 0 !important; /* Remove sidebar margin on mobile */
+    padding-left: 10px !important;
+    padding-right: 15px !important;
+  }
+  
+  .Polaris-Page {
+    padding: 15px 0 15px 0 !important;
+  }
+}
+
+/* Ensure consistent spacing for all page types */
+.Polaris-Page--fullWidth {
+  padding: 20px 0 20px 0 !important;
+}
+
+/* TopBar customizations */
+.Polaris-TopBar {
+  position: relative;
+}
+
+/* Hide the default TopBar logo area */
+.Polaris-TopBar__LogoContainer,
+.Polaris-TopBar__Logo {
+  display: none !important;
+}
+
+/* Custom import status area styling */
+.custom-topbar-logo {
+  position: absolute;
+  left: 60px; /* Position after the navigation toggle */
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  padding: 8px 16px;
+  max-width: calc(100% - 400px); /* Ensure it doesn't overlap with search */
+}
+
+/* Hide the secondary menu area */
+.Polaris-TopBar__SecondaryMenu {
+  display: none !important;
+}
+
+/* Right-align search field and prevent overlap */
+.Polaris-TopBar__SearchField,
+.Polaris-TopBar__Search {
+  margin-left: auto !important; /* Push to right side */
+  margin-right: 20px !important; /* Add some right margin */
+  max-width: 300px !important; /* Limit width */
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* Ensure TopBar contents don't overlap */
+.Polaris-TopBar__Contents {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+}
+
+/* Additional search field positioning */
+.Polaris-TopBar__SearchFieldContainer {
+  margin-left: auto !important;
+  margin-right: 20px !important;
+}

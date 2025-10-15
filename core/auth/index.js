@@ -49,20 +49,30 @@ export const initializeAuth = (app, options = {}) => {
 
         // Trigger Day 1 data fetch for new installations
         if (!isReinstallation) {
-          console.log(`🚀 Triggering Day 1 data fetch for new installation: ${shop}`);
+          console.log(`🚀 [OAUTH] Triggering Day 1 data fetch for new installation: ${shop}`);
+          console.log(`🔍 [OAUTH] Session details:`, {
+            shop: res.locals.shopify.session.shop,
+            hasAccessToken: !!res.locals.shopify.session.accessToken,
+            scope: res.locals.shopify.session.scope
+          });
           
           // Import and schedule Day 1 data fetch with delay
           setTimeout(async () => {
             try {
+              console.log(`🔄 [OAUTH] Starting Day 1 data fetch job for ${shop}...`);
               const { executeDay1DataFetch } = await import('../jobs/day1DataFetchJob.js');
-              await executeDay1DataFetch(shop, {
+              const result = await executeDay1DataFetch(shop, {
                 trigger: 'oauth_completion',
                 session: res.locals.shopify.session
               });
+              console.log(`✅ [OAUTH] Day 1 data fetch completed:`, result);
             } catch (error) {
-              console.error(`❌ Failed to execute Day 1 data fetch for ${shop}:`, error);
+              console.error(`❌ [OAUTH] Failed to execute Day 1 data fetch for ${shop}:`, error);
+              console.error(`❌ [OAUTH] Error stack:`, error.stack);
             }
           }, 10000); // 10 second delay to ensure OAuth is fully complete
+        } else {
+          console.log(`ℹ️ [OAUTH] Skipping Day 1 data fetch for reinstallation: ${shop}`);
         }
 
         // Call success callback

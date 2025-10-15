@@ -9,6 +9,10 @@ import analyticsRoutes from "./analyticsRoutes.js";
 import reportRoutes from "./reportRoutes.js";
 import storeRoutes from "./storeRoutes.js";
 import syncStatusRoutes from "./syncStatusRoutes.js";
+import ordersRoutes from "./ordersRoutes.js";
+import productsRoutes from "./productsRoutes.js";
+import cleanupRoutes from "./cleanupRoutes.js";
+import customersRoutes from "./customersRoutes.js";
 
 const router = express.Router();
 
@@ -29,6 +33,10 @@ router.use("/analytics", analyticsRoutes);
 router.use("/reports", reportRoutes);
 router.use("/store-data", storeRoutes);
 router.use("/sync", syncStatusRoutes);
+router.use("/orders", ordersRoutes);
+router.use("/products-data", productsRoutes);
+router.use("/cleanup", cleanupRoutes);
+router.use("/customers", customersRoutes);
 
 // App health check
 router.get("/health", (req, res) => {

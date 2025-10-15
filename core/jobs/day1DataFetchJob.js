@@ -89,38 +89,44 @@ async function scheduleMetricsComputation(shop, stats) {
   console.log(`🔄 [DAY1-JOB] Scheduling metrics computation for ${shop}...`);
   
   try {
-    // Import job scheduler
-    const { jobScheduler } = await import('../jobs/index.js');
+    // For now, run metrics computation directly instead of scheduling
+    // TODO: Implement proper job scheduler integration
     
-    // Schedule profit metrics computation
-    if (stats.orders > 0) {
-      await jobScheduler.scheduleJob('profit-metrics-computation', {
-        shop,
-        priority: 'high',
-        delay: 5000 // 5 seconds delay
-      });
-      console.log(`✅ [DAY1-JOB] Scheduled profit metrics computation for ${shop}`);
+    if (stats.orders > 0 || stats.products > 0) {
+      console.log(`🔄 [DAY1-JOB] Running metrics computation directly for ${shop}...`);
+      
+      // Import and run metrics computation jobs
+      const { 
+        executeProfitMetricsComputation,
+        executeProductPerformanceAnalysis 
+      } = await import('./metricsComputationJobs.js');
+      
+      // Run profit metrics computation
+      if (stats.orders > 0) {
+        setTimeout(async () => {
+          try {
+            await executeProfitMetricsComputation(shop);
+            console.log(`✅ [DAY1-JOB] Profit metrics computation completed for ${shop}`);
+          } catch (error) {
+            console.error(`❌ [DAY1-JOB] Profit metrics computation failed:`, error);
+          }
+        }, 5000);
+      }
+      
+      // Run product performance analysis
+      if (stats.products > 0) {
+        setTimeout(async () => {
+          try {
+            await executeProductPerformanceAnalysis(shop);
+            console.log(`✅ [DAY1-JOB] Product performance analysis completed for ${shop}`);
+          } catch (error) {
+            console.error(`❌ [DAY1-JOB] Product performance analysis failed:`, error);
+          }
+        }, 10000);
+      }
     }
     
-    // Schedule customer LTV computation
-    if (stats.customers > 0) {
-      await jobScheduler.scheduleJob('customer-ltv-computation', {
-        shop,
-        priority: 'medium',
-        delay: 10000 // 10 seconds delay
-      });
-      console.log(`✅ [DAY1-JOB] Scheduled customer LTV computation for ${shop}`);
-    }
-    
-    // Schedule product performance analysis
-    if (stats.products > 0) {
-      await jobScheduler.scheduleJob('product-performance-analysis', {
-        shop,
-        priority: 'medium',
-        delay: 15000 // 15 seconds delay
-      });
-      console.log(`✅ [DAY1-JOB] Scheduled product performance analysis for ${shop}`);
-    }
+    console.log(`✅ [DAY1-JOB] Metrics computation scheduled for ${shop}`);
     
   } catch (error) {
     console.error(`❌ [DAY1-JOB] Failed to schedule metrics computation for ${shop}:`, error);

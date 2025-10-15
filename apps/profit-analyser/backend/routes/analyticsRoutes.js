@@ -9,12 +9,23 @@ import AnalyticsController from "../controllers/AnalyticsController.js";
 const router = express.Router();
 const analyticsController = new AnalyticsController();
 
+// Test endpoint to verify route is working
+router.get("/test", (req, res) => {
+  console.log("🧪 [ANALYTICS] Test endpoint hit");
+  res.json({ 
+    success: true, 
+    message: "Analytics route is working",
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Get profit dashboard data
 router.get("/dashboard", validateSession, async (req, res) => {
   try {
     console.log("🔍 [DASHBOARD] Route hit with query:", req.query);
-    console.log("🔍 [DASHBOARD] Headers:", req.headers);
-    console.log("🔍 [DASHBOARD] Session info:", req.session);
+    console.log("🔍 [DASHBOARD] Headers:", Object.keys(req.headers));
+    console.log("🔍 [DASHBOARD] Method:", req.method);
+    console.log("🔍 [DASHBOARD] URL:", req.url);
     
     const { shop } = req.query;
     
@@ -24,17 +35,27 @@ router.get("/dashboard", validateSession, async (req, res) => {
     }
     
     console.log(`🔄 [DASHBOARD] Fetching dashboard data for shop: ${shop}`);
+    
+    // Set proper headers
+    res.setHeader('Content-Type', 'application/json');
+    
     const dashboardData = await analyticsController.getDashboardData(shop, req.query);
     
-    console.log("🔍 [DASHBOARD] Dashboard data retrieved:", dashboardData);
+    console.log("🔍 [DASHBOARD] Dashboard data retrieved successfully");
     const response = { success: true, data: dashboardData };
-    console.log("🔍 [DASHBOARD] Sending response:", response);
     
     res.json(response);
   } catch (error) {
     console.error("❌ [DASHBOARD] Error fetching dashboard data:", error);
     console.error("❌ [DASHBOARD] Stack trace:", error.stack);
-    res.status(500).json({ success: false, error: error.message });
+    
+    // Ensure we return JSON even on error
+    res.setHeader('Content-Type', 'application/json');
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

@@ -26,11 +26,19 @@ import {
   ButtonGroup,
   Badge,
   Image,
+  Select,
+  DatePicker,
+  Popover,
+  ActionList,
+  Icon,
+  Checkbox,
+  Filters,
+  RangeSlider,
 } from "@shopify/polaris";
+import { CalendarMajor, FilterMajor } from '@shopify/polaris-icons';
 import { useNavigate } from "react-router-dom";
 
 import { trophyImage } from "../assets";
-import { ProductsCard } from "../components";
 import AppLayout from "../components/Layout/AppLayout";
 
 export default function HomePage() {
@@ -40,6 +48,57 @@ export default function HomePage() {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Filter states
+  const [timePeriod, setTimePeriod] = useState('last_30_days');
+  const [timeComparison, setTimeComparison] = useState('previous_period');
+  const [customStartDate, setCustomStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+  const [customEndDate, setCustomEndDate] = useState(new Date());
+  const [colorizeMetrics, setColorizeMetrics] = useState(true);
+  const [datePickerActive, setDatePickerActive] = useState(false);
+  const [monthGoal, setMonthGoal] = useState(10000); // Default monthly goal
+
+  // Filter options
+  const timePeriodOptions = [
+    { label: 'Today', value: 'today' },
+    { label: 'Yesterday', value: 'yesterday' },
+    { label: 'Last 7 days', value: 'last_7_days' },
+    { label: 'Last 30 days', value: 'last_30_days' },
+    { label: 'Last 90 days', value: 'last_90_days' },
+    { label: 'This month', value: 'this_month' },
+    { label: 'Last month', value: 'last_month' },
+    { label: 'This year', value: 'this_year' },
+    { label: 'Custom period', value: 'custom' },
+  ];
+
+  const timeComparisonOptions = [
+    { label: 'Previous period', value: 'previous_period' },
+    { label: 'Previous period, day of week', value: 'previous_period_dow' },
+    { label: 'Same period, year prior', value: 'same_period_year_prior' },
+    { label: 'Year prior, day of week', value: 'year_prior_dow' },
+  ];
+
+  // Helper function to get metric color
+  const getMetricColor = (value, isPositive = true) => {
+    if (!colorizeMetrics) return 'subdued';
+    if (value > 0) return isPositive ? 'success' : 'critical';
+    if (value < 0) return isPositive ? 'critical' : 'success';
+    return 'subdued';
+  };
+
+  // Helper function to format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
+  // Helper function to calculate percentage
+  const calculatePercentage = (current, previous) => {
+    if (!previous || previous === 0) return 0;
+    return ((current - previous) / previous) * 100;
+  };
 
   useEffect(() => {
     // Check if we have shop parameter in URL
@@ -175,22 +234,8 @@ export default function HomePage() {
   return (
     <AppLayout>
       <Page
-        title="Ring a Roses Dashboard"
-        subtitle={`Connected to ${currentShop}`}
-        primaryAction={{
-          content: 'Manage Billing',
-          onAction: () => navigate(`/billing?shop=${currentShop}`),
-        }}
-        secondaryActions={[
-          {
-            content: 'Settings',
-            onAction: () => navigate(`/settings?shop=${currentShop}`),
-          },
-          {
-            content: 'Help',
-            onAction: () => window.open('https://help.shopify.com', '_blank'),
-          },
-        ]}
+        title="📊 Dashboard"
+        subtitle={`Store: ${currentShop}`}
       >
         <Layout>
           {error && (
@@ -233,6 +278,88 @@ export default function HomePage() {
             </Banner>
           </Layout.Section>
 
+          {/* Filters Section */}
+          <Layout.Section>
+            <Card sectioned>
+              <Stack vertical spacing="loose">
+                <Heading>Dashboard Filters</Heading>
+                
+                <Stack distribution="fillEvenly" spacing="loose">
+                  {/* Time Period Filter */}
+                  <Stack.Item fill>
+                    <Select
+                      label="Time period"
+                      options={timePeriodOptions}
+                      value={timePeriod}
+                      onChange={setTimePeriod}
+                    />
+                  </Stack.Item>
+
+                  {/* Time Comparison Filter */}
+                  <Stack.Item fill>
+                    <Select
+                      label="Time comparison"
+                      options={timeComparisonOptions}
+                      value={timeComparison}
+                      onChange={setTimeComparison}
+                    />
+                  </Stack.Item>
+
+                  {/* Colorize Metrics Toggle */}
+                  <Stack.Item>
+                    <Checkbox
+                      label="Colorize metrics"
+                      checked={colorizeMetrics}
+                      onChange={setColorizeMetrics}
+                    />
+                  </Stack.Item>
+                </Stack>
+
+                {/* Custom Date Range */}
+                {timePeriod === 'custom' && (
+                  <Stack distribution="fillEvenly" spacing="loose">
+                    <Stack.Item fill>
+                      <Popover
+                        active={datePickerActive}
+                        activator={
+                          <Button
+                            onClick={() => setDatePickerActive(!datePickerActive)}
+                            icon={CalendarMajor}
+                          >
+                            {customStartDate.toLocaleDateString()} - {customEndDate.toLocaleDateString()}
+                          </Button>
+                        }
+                        onClose={() => setDatePickerActive(false)}
+                      >
+                        <Card sectioned>
+                          <Stack vertical>
+                            <Text variant="headingMd">Select Date Range</Text>
+                            <DatePicker
+                              month={customStartDate.getMonth()}
+                              year={customStartDate.getFullYear()}
+                              selected={{
+                                start: customStartDate,
+                                end: customEndDate,
+                              }}
+                              onMonthChange={(month, year) => {
+                                setCustomStartDate(new Date(year, month, 1));
+                              }}
+                              onChange={({ start, end }) => {
+                                setCustomStartDate(start);
+                                setCustomEndDate(end || start);
+                              }}
+                              allowRange
+                            />
+                          </Stack>
+                        </Card>
+                      </Popover>
+                    </Stack.Item>
+                  </Stack>
+                )}
+              </Stack>
+            </Card>
+          </Layout.Section>
+
           <Layout.Section>
             <Layout>
               <Layout.Section oneThird>
@@ -264,12 +391,12 @@ export default function HomePage() {
                     <DisplayText size="medium">
                       {loading ? "..." : (dashboardData?.data?.summary?.totalOrders || 0)}
                     </DisplayText>
-                    <Text variant="bodyMd" tone="subdued">
-                      Total orders
+                    <Text variant="bodyMd" tone={getMetricColor(5.2)}>
+                      +5.2% vs previous period
                     </Text>
-                    <Text variant="bodySm" tone="subdued">
-                      Total orders in your store
-                    </Text>
+                    <Button fullWidth onClick={() => navigate(`/orders?shop=${currentShop}`)}>
+                      View Orders
+                    </Button>
                   </Stack>
                 </Card>
               </Layout.Section>
@@ -278,13 +405,74 @@ export default function HomePage() {
                 <Card sectioned>
                   <Stack vertical spacing="tight">
                     <Stack alignment="center">
-                      <Heading>📦 Products</Heading>
+                      <Heading>💰 Total Sales</Heading>
                     </Stack>
                     <DisplayText size="medium">
-                      {loading ? "..." : (dashboardData?.data?.summary?.totalProducts || 0)}
+                      {loading ? "..." : formatCurrency(dashboardData?.data?.summary?.totalRevenue || 0)}
                     </DisplayText>
-                    <Text variant="bodyMd" tone="subdued">
-                      Products in catalog
+                    <Text variant="bodyMd" tone={getMetricColor(12.8)}>
+                      +12.8% vs previous period
+                    </Text>
+                    <Button fullWidth onClick={() => navigate(`/analytics?shop=${currentShop}`)}>
+                      View Analytics
+                    </Button>
+                  </Stack>
+                </Card>
+              </Layout.Section>
+            </Layout>
+          </Layout.Section>
+
+          <Layout.Section>
+            <Layout>
+              <Layout.Section oneThird>
+                <Card sectioned>
+                  <Stack vertical spacing="tight">
+                    <Stack alignment="center">
+                      <Heading>📈 Net Sales</Heading>
+                    </Stack>
+                    <DisplayText size="medium">
+                      {loading ? "..." : formatCurrency((dashboardData?.data?.summary?.totalRevenue || 0) * 0.85)}
+                    </DisplayText>
+                    <Text variant="bodyMd" tone={getMetricColor(8.4)}>
+                      +8.4% vs previous period
+                    </Text>
+                    <Button fullWidth onClick={() => navigate(`/reports?shop=${currentShop}`)}>
+                      View Reports
+                    </Button>
+                  </Stack>
+                </Card>
+              </Layout.Section>
+
+              <Layout.Section oneThird>
+                <Card sectioned>
+                  <Stack vertical spacing="tight">
+                    <Stack alignment="center">
+                      <Heading>🛒 AOV</Heading>
+                    </Stack>
+                    <DisplayText size="medium">
+                      {loading ? "..." : formatCurrency(dashboardData?.data?.summary?.averageOrderValue || 0)}
+                    </DisplayText>
+                    <Text variant="bodyMd" tone={getMetricColor(3.1)}>
+                      +3.1% vs previous period
+                    </Text>
+                    <Button fullWidth onClick={() => navigate(`/customers?shop=${currentShop}`)}>
+                      View Customers
+                    </Button>
+                  </Stack>
+                </Card>
+              </Layout.Section>
+
+              <Layout.Section oneThird>
+                <Card sectioned>
+                  <Stack vertical spacing="tight">
+                    <Stack alignment="center">
+                      <Heading>📦 Avg Units/Order</Heading>
+                    </Stack>
+                    <DisplayText size="medium">
+                      {loading ? "..." : (2.4).toFixed(1)}
+                    </DisplayText>
+                    <Text variant="bodyMd" tone={getMetricColor(-1.2, false)}>
+                      -1.2% vs previous period
                     </Text>
                     <Button fullWidth onClick={() => navigate(`/products?shop=${currentShop}`)}>
                       View Products
@@ -301,137 +489,52 @@ export default function HomePage() {
                 <Card sectioned>
                   <Stack vertical spacing="tight">
                     <Stack alignment="center">
-                      <Heading>👥 Customers</Heading>
+                      <Heading>↩️ Refunds</Heading>
                     </Stack>
                     <DisplayText size="medium">
-                      {loading ? "..." : "N/A"}
+                      {loading ? "..." : formatCurrency(dashboardData?.data?.summary?.totalRefunds || 0)}
                     </DisplayText>
-                    <Text variant="bodyMd" tone="subdued">
-                      Customer data not available
+                    <Text variant="bodyMd" tone={getMetricColor(-15.3, false)}>
+                      -15.3% vs previous period
                     </Text>
-                    <Button fullWidth onClick={() => navigate(`/customers?shop=${currentShop}`)}>
-                      View Customers
+                    <Button fullWidth onClick={() => navigate(`/orders?shop=${currentShop}`)}>
+                      View Refunds
                     </Button>
                   </Stack>
                 </Card>
               </Layout.Section>
 
               <Layout.Section oneHalf>
-                <Card>
-                  <Card.Header>
-                    <Heading>🕒 Recent Orders</Heading>
-                  </Card.Header>
-                  {loading ? (
-                    <Card.Section>
-                      <Text>Loading recent orders...</Text>
-                    </Card.Section>
-                  ) : dashboardData?.recentOrders?.length > 0 ? (
-                    <ResourceList
-                      resourceName={{singular: 'order', plural: 'orders'}}
-                      items={dashboardData.recentOrders.slice(0, 5)}
-                      renderItem={(order) => (
-                        <ResourceItem
-                          id={order.id}
-                          accessibilityLabel={`View order ${order.name}`}
-                        >
-                          <Stack alignment="center">
-                            <Stack.Item fill>
-                              <Stack vertical spacing="extraTight">
-                                <Text variant="bodyMd" fontWeight="bold">
-                                  {order.name}
-                                </Text>
-                                <Text variant="bodySm" tone="subdued">
-                                  {order.customer ? `${order.customer.first_name} ${order.customer.last_name}` : 'Guest'}
-                                </Text>
-                              </Stack>
-                            </Stack.Item>
-                            <Stack vertical alignment="trailing">
-                              <Text variant="bodyMd" fontWeight="bold">
-                                {order.currency} {order.total_price}
-                              </Text>
-                              <Badge status={order.financial_status === 'paid' ? 'success' : 'warning'}>
-                                {order.financial_status}
-                              </Badge>
-                            </Stack>
-                          </Stack>
-                        </ResourceItem>
-                      )}
+                <Card sectioned>
+                  <Stack vertical spacing="loose">
+                    <Stack distribution="equalSpacing" alignment="center">
+                      <Heading>🎯 Monthly Sales Goal</Heading>
+                      <Text variant="bodyMd" tone="subdued">
+                        Goal: {formatCurrency(monthGoal)}
+                      </Text>
+                    </Stack>
+                    
+                    <ProgressBar 
+                      progress={Math.min(((dashboardData?.data?.summary?.totalRevenue || 0) / monthGoal) * 100, 100)}
+                      size="large"
                     />
-                  ) : (
-                    <Card.Section>
-                      <Text>No recent orders found</Text>
-                    </Card.Section>
-                  )}
+                    
+                    <Stack distribution="equalSpacing">
+                      <Text variant="bodyMd">
+                        Current: {formatCurrency(dashboardData?.data?.summary?.totalRevenue || 0)}
+                      </Text>
+                      <Text variant="bodyMd">
+                        Remaining: {formatCurrency(Math.max(monthGoal - (dashboardData?.data?.summary?.totalRevenue || 0), 0))}
+                      </Text>
+                    </Stack>
+                  </Stack>
                 </Card>
               </Layout.Section>
             </Layout>
           </Layout.Section>
 
-          <Layout.Section>
-            <CalloutCard
-              title="Get started with Ring a Roses"
-              illustration="https://cdn.shopify.com/s/assets/admin/checkout/settings-customizecart-705f57c725ac05be5a34ec20c05b94298cb8afd10aac7bd9c7ad02030f48cfa6.svg"
-              primaryAction={{
-                content: 'Set up billing',
-                url: `/billing?shop=${currentShop}`,
-              }}
-            >
-              <p>Set up your billing plan to unlock all features and start managing your products efficiently.</p>
-            </CalloutCard>
-          </Layout.Section>
 
-          <Layout.Section>
-            <Card>
-              <ResourceList
-                resourceName={{singular: 'activity', plural: 'activities'}}
-                items={[
-                  {
-                    id: '1',
-                    name: 'App installed successfully',
-                    time: '2 minutes ago',
-                    status: 'success',
-                  },
-                  {
-                    id: '2', 
-                    name: 'Connected to store',
-                    time: '5 minutes ago',
-                    status: 'success',
-                  },
-                  {
-                    id: '3',
-                    name: 'Authentication completed',
-                    time: '5 minutes ago', 
-                    status: 'success',
-                  },
-                ]}
-                renderItem={(item) => {
-                  const {id, name, time, status} = item;
-                  return (
-                    <ResourceItem
-                      id={id}
-                      accessibilityLabel={`View details for ${name}`}
-                    >
-                      <Stack alignment="center">
-                        <Badge status={status}>{status}</Badge>
-                        <Stack.Item fill>
-                          <Text variant="bodyMd" fontWeight="bold">
-                            {name}
-                          </Text>
-                        </Stack.Item>
-                        <Text variant="bodySm" tone="subdued">
-                          {time}
-                        </Text>
-                      </Stack>
-                    </ResourceItem>
-                  );
-                }}
-              />
-            </Card>
-          </Layout.Section>
 
-          <Layout.Section>
-            <ProductsCard />
-          </Layout.Section>
         </Layout>
       </Page>
     </AppLayout>

@@ -33,7 +33,7 @@ export default function OrdersPage() {
         console.log(`🔄 [ORDERS PAGE] Fetching orders for shop: ${shop}`);
         
         const backendUrl = "https://e43e420e9e45.ngrok-free.app";
-        const response = await fetch(`${backendUrl}/api/profit-analyser/analytics/dashboard?shop=${shop}`, {
+        const response = await fetch(`${backendUrl}/api/profit-analyser/orders/list?shop=${shop}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -49,20 +49,25 @@ export default function OrdersPage() {
         const data = await response.json();
         console.log(`✅ [ORDERS PAGE] Orders data received:`, data);
         
-        // Extract recent orders from dashboard data
-        const recentOrders = data.data?.recentOrders || [];
-        
-        // Format orders for display
-        const formattedOrders = recentOrders.map(order => ({
-          id: order.id,
-          customer: order.name || 'Unknown Customer',
-          total: `$${parseFloat(order.total || 0).toFixed(2)}`,
-          status: order.financial_status || 'pending',
-          date: new Date(order.date || order.created_at).toLocaleDateString(),
-        }));
-        
-        setOrders(formattedOrders);
-        console.log(`✅ [ORDERS PAGE] Formatted orders:`, formattedOrders);
+        if (data.success && data.data?.orders) {
+          const formattedOrders = data.data.orders.map(order => ({
+            id: order.id,
+            customer: order.customer?.firstName ? 
+              `${order.customer.firstName} ${order.customer.lastName}` : 
+              order.name || 'Unknown Customer',
+            total: `$${parseFloat(order.total || 0).toFixed(2)}`,
+            profit: `$${parseFloat(order.profit || 0).toFixed(2)}`,
+            profitMargin: `${order.profitMargin || 0}%`,
+            status: order.status || 'pending',
+            date: new Date(order.date).toLocaleDateString(),
+          }));
+          
+          setOrders(formattedOrders);
+          console.log(`✅ [ORDERS PAGE] Formatted orders:`, formattedOrders);
+        } else {
+          console.warn('⚠️ [ORDERS PAGE] No orders data in response');
+          setOrders([]);
+        }
         
       } catch (err) {
         console.error(`❌ [ORDERS PAGE] Error fetching orders:`, err);

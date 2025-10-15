@@ -11,9 +11,13 @@ automatically_update_urls_on_dev = true
 [webhooks]
 api_version = "2026-01"
 
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/api/webhooks/app/uninstalled"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,write_products,read_orders"
+scopes = "write_products,read_products,read_orders,read_customers"
 
 [auth]
 redirect_urls = [ "https://e43e420e9e45.ngrok-free.app/api/auth/callback" ]

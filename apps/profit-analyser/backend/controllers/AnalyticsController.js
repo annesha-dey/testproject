@@ -4,92 +4,115 @@
  */
 
 import { APIFactory } from "../../../../core/utils/api.js";
+import Order from "../../../../core/db/models/Order.js";
+import LineItem from "../../../../core/db/models/LineItem.js";
+import Product from "../../../../core/db/models/Product.js";
+import Customer from "../../../../core/db/models/Customer.js";
 
 export default class AnalyticsController {
   constructor() {
     this.name = "AnalyticsController";
   }
   /**
-   * Get dashboard data with key metrics
+   * Get dashboard data with key metrics from Day 1 fetched data
    */
   async getDashboardData(shop, options = {}) {
     try {
       console.log(`🔄 [ANALYTICS] Fetching dashboard data for shop: ${shop}`);
       console.log(`🔍 [ANALYTICS] Options:`, options);
       
-      console.log(`🔄 [ANALYTICS] Creating API clients...`);
-      const { rest } = await APIFactory.createClients(shop);
-      console.log(`✅ [ANALYTICS] API clients created successfully`);
+      // Get data from Day 1 fetched MongoDB collections
+      console.log(`🔄 [ANALYTICS] Fetching data from MongoDB...`);
       
-      // Get basic shop metrics
-      console.log(`🔄 [ANALYTICS] Fetching products...`);
-      const productsResponse = await rest.getProducts({ limit: 10 });
-      const products = productsResponse.body?.products || productsResponse.products || [];
-      console.log(`✅ [ANALYTICS] Products fetched: ${products.length}`);
+      const [orders, products, customers, lineItems] = await Promise.all([
+        Order.find({ shop }).sort({ createdAt: -1 }).limit(100),
+        Product.find({ shop }).sort({ createdAt: -1 }).limit(50),
+        Customer.find({ shop }).sort({ createdAt: -1 }).limit(50),
+        LineItem.find({ shop }).sort({ createdAt: -1 }).limit(100)
+      ]);
       
-      // Try to fetch orders, but handle permission errors gracefully
-      let orders = [];
-      try {
-        console.log(`🔄 [ANALYTICS] Fetching orders...`);
-        const ordersResponse = await rest.getOrders({ limit: 50, status: 'any' });
-        orders = ordersResponse.body?.orders || ordersResponse.orders || [];
-        console.log(`✅ [ANALYTICS] Orders fetched: ${orders.length}`);
-      } catch (orderError) {
-        console.log(`⚠️ [ANALYTICS] Could not fetch orders (likely missing read_orders scope):`, orderError.message);
-        orders = []; // Use empty array if orders can't be fetched
-      }
+      console.log(`✅ [ANALYTICS] Data fetched from MongoDB:`, {
+        orders: orders.length,
+        products: products.length,
+        customers: customers.length,
+        lineItems: lineItems.length
+      });
       
-      // Calculate basic metrics
-      console.log(`🔄 [ANALYTICS] Calculating metrics...`);
+      // Calculate real metrics from Day 1 data
+      console.log(`🔄 [ANALYTICS] Calculating real metrics...`);
+      
       const totalOrders = orders.length;
       const totalProducts = products.length;
-      const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
+      const totalCustomers = customers.length;
       
-      // Mock profit calculation (30% margin)
-      const totalProfit = totalRevenue * 0.3;
+      // Calculate revenue and profit from orders
+      const totalRevenue = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+      const totalProfit = orders.reduce((sum, order) => sum + (order.grossProfit || 0), 0);
       const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
       
-      console.log(`🔍 [ANALYTICS] Calculated metrics:`, {
+      // Calculate average order value
+      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+      
+      // Get top performing products by profit
+      const topProducts = await this.getTopProductsByProfit(shop, 5);
+      
+      // Get recent orders with profit data
+      const recentOrders = orders.slice(0, 5).map(order => ({
+        id: order.shopifyOrderId,
+        name: order.orderNumber || `#${order.shopifyOrderId}`,
+        total: order.totalPrice || 0,
+        profit: order.grossProfit || 0,
+        profitMargin: order.profitMargin || 0,
+        date: order.createdAt,
+        status: order.financialStatus
+      }));
+      
+      // Calculate trends (compare last 30 days vs previous 30 days)
+      const trends = await this.calculateTrends(shop);
+      
+      console.log(`🔍 [ANALYTICS] Calculated real metrics:`, {
         totalOrders,
         totalProducts,
+        totalCustomers,
         totalRevenue: totalRevenue.toFixed(2),
         totalProfit: totalProfit.toFixed(2),
-        profitMargin: profitMargin.toFixed(1)
+        profitMargin: profitMargin.toFixed(1),
+        averageOrderValue: averageOrderValue.toFixed(2)
       });
       
       const dashboardData = {
         summary: {
           totalOrders,
           totalProducts,
-          totalRevenue: totalRevenue.toFixed(2),
-          totalProfit: totalProfit.toFixed(2),
-          profitMargin: profitMargin.toFixed(1)
+          totalCustomers,
+          totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+          totalProfit: parseFloat(totalProfit.toFixed(2)),
+          profitMargin: parseFloat(profitMargin.toFixed(1)),
+          averageOrderValue: parseFloat(averageOrderValue.toFixed(2))
         },
-        recentOrders: orders.slice(0, 5).map(order => ({
-          id: order.id,
-          name: order.name,
-          total: order.total_price,
-          date: order.created_at
-        })),
-        topProducts: products.slice(0, 5).map(product => ({
-          id: product.id,
-          title: product.title,
-          price: product.variants?.[0]?.price || '0'
-        }))
+        trends: {
+          revenueGrowth: trends.revenueGrowth,
+          profitGrowth: trends.profitGrowth,
+          orderGrowth: trends.orderGrowth
+        },
+        recentOrders,
+        topProducts,
+        performance: {
+          totalLineItems: lineItems.length,
+          averageProfitPerOrder: totalOrders > 0 ? parseFloat((totalProfit / totalOrders).toFixed(2)) : 0,
+          conversionMetrics: {
+            ordersPerCustomer: totalCustomers > 0 ? parseFloat((totalOrders / totalCustomers).toFixed(2)) : 0,
+            revenuePerCustomer: totalCustomers > 0 ? parseFloat((totalRevenue / totalCustomers).toFixed(2)) : 0
+          }
+        }
       };
       
       console.log(`✅ [ANALYTICS] Dashboard data compiled for ${shop}`);
-      console.log(`🔍 [ANALYTICS] Dashboard data:`, dashboardData);
       return dashboardData;
       
     } catch (error) {
       console.error(`❌ [ANALYTICS] Error fetching dashboard data:`, error);
       console.error(`❌ [ANALYTICS] Error stack:`, error.stack);
-      console.error(`❌ [ANALYTICS] Error details:`, {
-        message: error.message,
-        name: error.name,
-        shop: shop
-      });
       throw error;
     }
   }
@@ -336,6 +359,121 @@ export default class AnalyticsController {
     });
     
     return Object.values(productStats);
+  }
+
+  /**
+   * Get top products by profit from Day 1 data
+   */
+  async getTopProductsByProfit(shop, limit = 5) {
+    try {
+      console.log(`🔍 [ANALYTICS] Getting top ${limit} products by profit for shop: ${shop}`);
+      
+      // Aggregate line items by product to calculate profit
+      const productProfits = await LineItem.aggregate([
+        { $match: { shop } },
+        {
+          $group: {
+            _id: "$productId",
+            totalQuantity: { $sum: "$quantity" },
+            totalRevenue: { $sum: { $multiply: ["$price", "$quantity"] } },
+            totalCost: { $sum: { $multiply: ["$cost", "$quantity"] } },
+            productTitle: { $first: "$productTitle" }
+          }
+        },
+        {
+          $addFields: {
+            totalProfit: { $subtract: ["$totalRevenue", "$totalCost"] }
+          }
+        },
+        { $sort: { totalProfit: -1 } },
+        { $limit: limit }
+      ]);
+      
+      // Get product titles from Product collection for products without titles
+      const productsWithTitles = await Promise.all(productProfits.map(async (product) => {
+        let title = product.productTitle;
+        
+        if (!title || title === 'Unknown Product') {
+          // Try to get title from Product collection
+          const productDoc = await Product.findOne({ 
+            shop, 
+            shopifyProductId: product._id 
+          }).lean();
+          
+          title = productDoc?.title || `Product ${product._id}`;
+        }
+        
+        return {
+          id: product._id,
+          title,
+          totalQuantity: product.totalQuantity,
+          totalRevenue: parseFloat(product.totalRevenue.toFixed(2)),
+          totalProfit: parseFloat(product.totalProfit.toFixed(2)),
+          profitMargin: product.totalRevenue > 0 ? 
+            parseFloat(((product.totalProfit / product.totalRevenue) * 100).toFixed(1)) : 0
+        };
+      }));
+      
+      return productsWithTitles;
+    } catch (error) {
+      console.error('❌ [ANALYTICS] Error getting top products by profit:', error);
+      return [];
+    }
+  }
+
+  /**
+   */
+  async calculateTrends(shop) {
+    try {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+      const sixtyDaysAgo = new Date(now.getTime() - (60 * 24 * 60 * 60 * 1000));
+      
+      // Get current period (last 30 days)
+      const currentPeriodOrders = await Order.find({
+        shop,
+        createdAt: { $gte: thirtyDaysAgo, $lte: now }
+      });
+      
+      // Get previous period (30-60 days ago)
+      const previousPeriodOrders = await Order.find({
+        shop,
+        createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo }
+      });
+      
+      // Calculate metrics for both periods
+      const currentRevenue = currentPeriodOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+      const currentProfit = currentPeriodOrders.reduce((sum, order) => sum + (order.grossProfit || 0), 0);
+      const currentOrderCount = currentPeriodOrders.length;
+      
+      const previousRevenue = previousPeriodOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+      const previousProfit = previousPeriodOrders.reduce((sum, order) => sum + (order.grossProfit || 0), 0);
+      const previousOrderCount = previousPeriodOrders.length;
+      
+      // Calculate growth percentages
+      const revenueGrowth = previousRevenue > 0 ? 
+        parseFloat((((currentRevenue - previousRevenue) / previousRevenue) * 100).toFixed(1)) : 0;
+      
+      const profitGrowth = previousProfit > 0 ? 
+        parseFloat((((currentProfit - previousProfit) / previousProfit) * 100).toFixed(1)) : 0;
+      
+      const orderGrowth = previousOrderCount > 0 ? 
+        parseFloat((((currentOrderCount - previousOrderCount) / previousOrderCount) * 100).toFixed(1)) : 0;
+      
+      return {
+        revenueGrowth,
+        profitGrowth,
+        orderGrowth
+      };
+      
+    } catch (error) {
+      console.error(`❌ [ANALYTICS] Error calculating trends:`, error);
+      return {
+        revenueGrowth: 0,
+        profitGrowth: 0,
+        orderGrowth: 0
+      };
+    }
   }
 
   /**

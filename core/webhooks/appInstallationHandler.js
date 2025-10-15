@@ -65,22 +65,54 @@ export async function handleAppInstallation(shop, webhookData) {
  */
 export async function handleAppUninstallation(shop, webhookData) {
   console.log(`🔔 [APP-UNINSTALL] App uninstallation detected for shop: ${shop}`);
+  console.log(`🔍 [APP-UNINSTALL] Webhook data:`, webhookData);
+  console.log(`🔍 [APP-UNINSTALL] Starting comprehensive cleanup process...`);
   
   try {
-    // Update store status but don't delete data (for potential reinstalls)
+    // First, update store status to mark as uninstalled
     await storeManager.updateStore(shop, {
       isActive: false,
       uninstalledAt: new Date(),
-      uninstallReason: webhookData?.reason || 'unknown'
+      uninstallReason: webhookData?.reason || 'app_uninstalled'
     });
     
     console.log(`✅ [APP-UNINSTALL] Store status updated for ${shop}`);
     
-    // TODO: Optionally clean up scheduled jobs for this shop
+    // Trigger complete data cleanup with a delay to ensure webhook processing completes
+    console.log(`🗑️ [APP-UNINSTALL] Scheduling data cleanup for ${shop}...`);
+    
+    setTimeout(async () => {
+      try {
+        const { executeDataCleanup } = await import('../jobs/dataCleanupJob.js');
+        
+        console.log(`🔄 [APP-UNINSTALL] Starting data cleanup for ${shop}...`);
+        const result = await executeDataCleanup(shop, {
+          trigger: 'app_uninstall',
+          webhookData,
+          timestamp: new Date()
+        });
+        
+        if (result.success) {
+          console.log(`🎉 [APP-UNINSTALL] Data cleanup completed successfully for ${shop}`);
+          console.log(`📊 [APP-UNINSTALL] Cleanup stats:`, result.stats);
+        } else {
+          console.error(`❌ [APP-UNINSTALL] Data cleanup failed for ${shop}:`, result.error);
+        }
+        
+      } catch (error) {
+        console.error(`❌ [APP-UNINSTALL] Error executing data cleanup for ${shop}:`, error);
+        console.error(`❌ [APP-UNINSTALL] Error stack:`, error.stack);
+      }
+    }, 5000); // 5 second delay to ensure webhook processing completes
+    
+    console.log(`✅ [APP-UNINSTALL] Data cleanup scheduled for ${shop}`);
+    
     // TODO: Send uninstall analytics/notifications
+    // TODO: Cancel any scheduled jobs for this shop
     
   } catch (error) {
     console.error(`❌ [APP-UNINSTALL] Error handling app uninstallation for ${shop}:`, error);
+    console.error(`❌ [APP-UNINSTALL] Error stack:`, error.stack);
   }
 }
 

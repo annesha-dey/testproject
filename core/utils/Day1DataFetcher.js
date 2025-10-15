@@ -33,23 +33,42 @@ export class Day1DataFetcher {
    */
   async fetchAllHistoricalData() {
     console.log(`🚀 [DAY1-FETCH] Starting historical data fetch for shop: ${this.shop}`);
+    console.log(`🔍 [DAY1-FETCH] Database connection status:`, global.mongoose?.connection?.readyState);
+    console.log(`🔍 [DAY1-FETCH] Initial stats:`, this.stats);
     
     try {
+      console.log(`🔄 [DAY1-FETCH] Creating API clients for ${this.shop}...`);
       const { rest, graphql } = await APIFactory.createClients(this.shop);
+      console.log(`✅ [DAY1-FETCH] API clients created successfully`);
       
       // Fetch data in order of dependency
+      console.log(`🔄 [DAY1-FETCH] Step 1: Fetching products...`);
       await this.fetchProducts(rest);
+      console.log(`✅ [DAY1-FETCH] Products fetch completed. Count: ${this.stats.products}`);
+      
+      console.log(`🔄 [DAY1-FETCH] Step 2: Fetching customers...`);
       await this.fetchCustomers(rest);
+      console.log(`✅ [DAY1-FETCH] Customers fetch completed. Count: ${this.stats.customers}`);
+      
+      console.log(`🔄 [DAY1-FETCH] Step 3: Fetching orders...`);
       await this.fetchOrders(rest);
+      console.log(`✅ [DAY1-FETCH] Orders fetch completed. Count: ${this.stats.orders}, Line Items: ${this.stats.lineItems}`);
+      
+      console.log(`🔄 [DAY1-FETCH] Step 4: Fetching refunds...`);
       await this.fetchRefunds(rest);
+      console.log(`✅ [DAY1-FETCH] Refunds fetch completed. Count: ${this.stats.refunds}`);
       
       console.log(`✅ [DAY1-FETCH] Completed historical data fetch for ${this.shop}`);
-      console.log(`📊 [DAY1-FETCH] Stats:`, this.stats);
+      console.log(`📊 [DAY1-FETCH] Final Stats:`, this.stats);
+      
+      // Verify data was saved to database
+      await this.verifyDatabaseData();
       
       return this.stats;
       
     } catch (error) {
       console.error(`❌ [DAY1-FETCH] Failed to fetch historical data for ${this.shop}:`, error);
+      console.error(`❌ [DAY1-FETCH] Error stack:`, error.stack);
       throw error;
     }
   }
@@ -77,10 +96,21 @@ export class Day1DataFetcher {
           params.page_info = pageInfo;
         }
         
+        console.log(`🔍 [DAY1-FETCH] Making API request with params:`, params);
         const response = await restClient.get('products.json', params);
-        const products = response.body?.products || response.products || [];
+        console.log(`🔍 [DAY1-FETCH] API response status:`, response.status || 'unknown');
+        console.log(`🔍 [DAY1-FETCH] API response structure:`, Object.keys(response));
         
+        const products = response.body?.products || response.products || [];
         console.log(`📦 [DAY1-FETCH] Processing ${products.length} products from page ${page}...`);
+        
+        if (products.length > 0) {
+          console.log(`🔍 [DAY1-FETCH] Sample product:`, {
+            id: products[0].id,
+            title: products[0].title,
+            variants: products[0].variants?.length || 0
+          });
+        }
         
         for (const shopifyProduct of products) {
           await this.saveProduct(shopifyProduct);
@@ -250,6 +280,8 @@ export class Day1DataFetcher {
    * Save product to database
    */
   async saveProduct(shopifyProduct) {
+    console.log(`🔍 [DAY1-FETCH] Saving product ${shopifyProduct.id} for shop ${this.shop}...`);
+    
     try {
       const productData = {
         shopifyProductId: shopifyProduct.id.toString(),
@@ -287,16 +319,25 @@ export class Day1DataFetcher {
         publishedAt: shopifyProduct.published_at ? new Date(shopifyProduct.published_at) : null
       };
 
-      await Product.findOneAndUpdate(
+      console.log(`🔍 [DAY1-FETCH] Product data prepared:`, {
+        shopifyProductId: productData.shopifyProductId,
+        shop: productData.shop,
+        title: productData.title,
+        variantCount: productData.variants?.length || 0
+      });
+
+      const savedProduct = await Product.findOneAndUpdate(
         { shop: this.shop, shopifyProductId: productData.shopifyProductId },
         productData,
         { upsert: true, new: true }
       );
 
+      console.log(`✅ [DAY1-FETCH] Product saved successfully:`, savedProduct._id);
       this.stats.products++;
       
     } catch (error) {
       console.error(`❌ [DAY1-FETCH] Error saving product ${shopifyProduct.id}:`, error);
+      console.error(`❌ [DAY1-FETCH] Product error stack:`, error.stack);
       this.stats.errors++;
     }
   }
@@ -502,6 +543,39 @@ export class Day1DataFetcher {
     } catch (error) {
       console.error(`❌ [DAY1-FETCH] Error saving refund ${shopifyRefund.id}:`, error);
       this.stats.errors++;
+    }
+  }
+
+  /**
+   * Verify data was saved to database
+   */
+  async verifyDatabaseData() {
+    console.log(`🔍 [DAY1-FETCH] Verifying database data for ${this.shop}...`);
+    
+    try {
+      const [orderCount, productCount, customerCount, lineItemCount, refundCount] = await Promise.all([
+        Order.countDocuments({ shop: this.shop }),
+        Product.countDocuments({ shop: this.shop }),
+        Customer.countDocuments({ shop: this.shop }),
+        LineItem.countDocuments({ shop: this.shop }),
+        Refund.countDocuments({ shop: this.shop })
+      ]);
+      
+      console.log(`📊 [DAY1-FETCH] Database verification results:`);
+      console.log(`   - Orders in DB: ${orderCount} (fetched: ${this.stats.orders})`);
+      console.log(`   - Products in DB: ${productCount} (fetched: ${this.stats.products})`);
+      console.log(`   - Customers in DB: ${customerCount} (fetched: ${this.stats.customers})`);
+      console.log(`   - Line Items in DB: ${lineItemCount} (fetched: ${this.stats.lineItems})`);
+      console.log(`   - Refunds in DB: ${refundCount} (fetched: ${this.stats.refunds})`);
+      
+      if (orderCount === 0 && productCount === 0 && customerCount === 0) {
+        console.error(`❌ [DAY1-FETCH] WARNING: No data found in database after fetch!`);
+      } else {
+        console.log(`✅ [DAY1-FETCH] Database verification successful`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ [DAY1-FETCH] Database verification failed:`, error);
     }
   }
 
